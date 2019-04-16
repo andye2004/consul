@@ -58,8 +58,8 @@ const (
 	ConfigEntryRequestType                           = 22
 	ACLRoleSetRequestType                            = 23
 	ACLRoleDeleteRequestType                         = 24
-	ACLRoleBindingRuleSetRequestType                 = 25
-	ACLRoleBindingRuleDeleteRequestType              = 26
+	ACLBindingRuleSetRequestType                     = 25
+	ACLBindingRuleDeleteRequestType                  = 26
 	ACLIdentityProviderSetRequestType                = 27
 	ACLIdentityProviderDeleteRequestType             = 28
 )
