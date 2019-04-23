@@ -35,19 +35,18 @@ The table below shows this endpoint's support for
 ### Parameters
 
 - `Name` `(string: <required>)` - Specifies a name for the ACL role. The name
-   can only contain alphanumeric characters as well as `-` and `_` and must be
-   unique. 
+  can only contain alphanumeric characters as well as `-` and `_` and must be
+  unique. 
    
-~> TODO(rb): update this.
-
 - `Description` `(string: "")` - Free form human readable description of the role.
 
-- `Policies` `(array<PolicyLink>)` - The list of policies that should
-   be applied to the role. A PolicyLink is an object with an "ID" and/or "Name" field
-   to specify a policy. With the PolicyLink, roles can be linked to policies either by the
-   policy name or by the policy ID. When policies are linked by name they will be
-   internally resolved to the policy ID. With linking roles internally by IDs,
-   Consul enables policy renaming without breaking tokens.
+- `Policies` `(array<PolicyLink>)` - The list of policies that should be
+  applied to the role. A PolicyLink is an object with an "ID" and/or "Name"
+  field to specify a policy. With the PolicyLink, roles can be linked to
+  policies either by the policy name or by the policy ID. When policies are
+  linked by name they will be internally resolved to the policy ID. With
+  linking roles internally by IDs, Consul enables policy renaming without
+  breaking tokens.
 
 - `ServiceIdentities` `(array<ServiceIdentity>)` - The list of service
   identities that should be applied to the role. 
@@ -56,7 +55,7 @@ The table below shows this endpoint's support for
 
   - `Datacenters` `(array<string>)` - Specifies the datacenters the effective
     policy is valid within. When no datacenters are provided the 
-    [effective policy](/docs/acl/acl-system.html#acl-service-identities) is
+    [effective policy](/docs/acl/acl-system.html#acl-service-identities) is 
     valid in all datacenters including those which do not yet exist but may in
     the future.
 
@@ -271,19 +270,18 @@ The table below shows this endpoint's support for
    in both places then they must match exactly.
 
 - `Name` `(string: <required>)` - Specifies a name for the ACL role. The name
-   can only contain alphanumeric characters as well as `-` and `_` and must be
-   unique. 
+  can only contain alphanumeric characters as well as `-` and `_` and must be
+  unique. 
    
-~> TODO(rb): update this.
+- `Description` `(string: "")` - Free form human readable description of the role.
 
-- `Description` `(string: "")` - Free form human readable description of this role.
-
-- `Policies` `(array<PolicyLink>)` - The list of policies that should
-   be applied to the role. A PolicyLink is an object with an "ID" and/or "Name" field
-   to specify a policy. With the PolicyLink, roles can be linked to policies either by the
-   policy name or by the policy ID. When policies are linked by name they will be
-   internally resolved to the policy ID. With linking roles internally by IDs,
-   Consul enables policy renaming without breaking tokens.
+- `Policies` `(array<PolicyLink>)` - The list of policies that should be
+  applied to the role. A PolicyLink is an object with an "ID" and/or "Name"
+  field to specify a policy. With the PolicyLink, roles can be linked to
+  policies either by the policy name or by the policy ID. When policies are
+  linked by name they will be internally resolved to the policy ID. With
+  linking roles internally by IDs, Consul enables policy renaming without
+  breaking tokens.
 
 - `ServiceIdentities` `(array<ServiceIdentity>)` - The list of service
   identities that should be applied to the role. 
@@ -292,7 +290,7 @@ The table below shows this endpoint's support for
 
   - `Datacenters` `(array<string>)` - Specifies the datacenters the effective
     policy is valid within. When no datacenters are provided the 
-    [effective policy](/docs/acl/acl-system.html#acl-service-identities) is
+    [effective policy](/docs/acl/acl-system.html#acl-service-identities) is 
     valid in all datacenters including those which do not yet exist but may in
     the future.
 
