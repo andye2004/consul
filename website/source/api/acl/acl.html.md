@@ -264,10 +264,11 @@ agent_prefix "" {
 }
 ```
 
-## Login to Identity Provider
+## Login to Auth Method
 
-This endpoint was added in Consul 1.5.0 and is used to exchange Identity
-Provider credentials for a newly-created Consul ACL token.
+This endpoint was added in Consul 1.5.0 and is used to exchange an [auth
+method](/docs/acl/acl-auth-methods.html) bearer tokens for a newly-created
+Consul ACL token.
 
 | Method | Path                         | Produces                   |
 | ------ | ---------------------------- | -------------------------- |
@@ -285,15 +286,12 @@ The table below shows this endpoint's support for
 
 ### Parameters
 
-- `IDPType` `(string: <required>)` - The type of the identity provider that
-  referred to by `IDPName`. This must match what is configured for the identity
-  provider.
+- `AuthMethod` `(string: <required>)` - The name of the auth method to use for login.
 
-- `IDPName` `(string: <required>)` - The name of the identity provider to use for login.
-
-- `IDPToken` `(string: <required>)` - The bearer token to present to the
-  identity provider during login. For `IDPType=kubernetes` this is a
-  [Service Account Token (JWT)](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#service-account-tokens).
+- `BearerToken` `(string: <required>)` - The bearer token to present to the
+  auth method during login for authentication purposes. For the Kubernetes Auth
+  Method this is a [Service Account Token
+  (JWT)](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#service-account-tokens).
 
 - `Meta` `(map<string|string>: nil)` - Specifies arbitrary KV metadata
   linked to the token. Can be useful to track origins.
@@ -302,9 +300,8 @@ The table below shows this endpoint's support for
 
 ```json
 {
-  "IDPType": "kubernetes",
-  "IDPName": "minikube",
-  "IDPToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9..."
+    "AuthMethod": "minikube",
+    "BearerToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9..."
 }
 ```
 
@@ -329,8 +326,13 @@ $ curl \
             "BoundName": "demo"
         }
     ],
+    "ServiceIdentities": [
+        {
+            "ServiceName": "example"
+        }
+    ],
     "Local": true,
-    "IDPName": "minikube",
+    "AuthMethod": "minikube",
     "CreateTime": "2019-04-10T14:16:16.629679569-05:00",
     "Hash": "Hs9sG4BuS+SBjHJFAYF8Sw8D2faatpfNPVSAih3+Uvo=",
     "CreateIndex": 48,
@@ -338,11 +340,11 @@ $ curl \
 }
 ```
 
-## Logout from Identity Provider
+## Logout from Auth Method
 
 This endpoint was added in Consul 1.5.0 and is used to destroy a token created
-via the [login endpoint](#login-to-identity-provider). The token deleted is
-specified with the `X-Consul-Token` header or the `token` query parameter.
+via the [login endpoint](#login-to-auth-method). The token deleted is specified
+with the `X-Consul-Token` header or the `token` query parameter.
 
 | Method | Path                         | Produces                   |
 | ------ | ---------------------------- | -------------------------- |
@@ -364,6 +366,9 @@ deleting a token for which you already must possess its secret.
 ### Sample Request
 
 ```sh
-$ curl -H "X-Consul-Token: ebd930c0-f484-871f-3d27-b1d9d8d4215d" \
-   http://127.0.0.1:8500/v1/acl/token/self
+$ curl \
+    -H "X-Consul-Token: ebd930c0-f484-871f-3d27-b1d9d8d4215d" \
+    --request POST \
+    --data @payload.json \
+    http://127.0.0.1:8500/v1/acl/logout
 ```

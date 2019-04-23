@@ -30,6 +30,10 @@ At the highest level, there are two major components to the ACL system:
 For many scenarios policies and tokens are sufficient, but more advanced setups
 may benefit from additional components in the ACL system:
 
+ * **ACL Roles** - Roles allow for grouping a set of policies and service
+   identities into a reusable higher-level entity that can be linked with many
+   tokens. (Added in Consul 1.5)
+
  * **ACL Service Identities** - Service Identities allow for an abbreviated
    syntax for expressing a kind of policy needed for an token to be usable with
    [Consul Connect](/docs/connect/index.html). At authorization time this acts
@@ -37,16 +41,11 @@ may benefit from additional components in the ACL system:
    further below. These are directly attached to tokens and roles and not
    independently configured. (Added in Consul 1.5)
 
- * **ACL Roles** - Roles allow the grouping of a set of policies and service
-   identities into a reusable higher-level entity that can be reused and linked
-   with many tokens. (Added in Consul 1.5)
+ * **ACL Auth Methods and Binding Rules** - To learn more about these topics,
+   see the [dedicated auth methods documentation page](/docs/acl/acl-auth-methods.html).
 
- * **ACL Identity Providers** - TODO
-
- * **ACL Role Binding Rules** - TODO
-
-ACL tokens, policies, roles, identity providers, and role binding rules are
-managed by Consul operators via Consul's [ACL API](/api/acl/acl.html), 
+ACL tokens, policies, roles, auth methods, and binding rules are managed by 
+Consul operators via Consul's [ACL API](/api/acl/acl.html), 
 [ACL CLI](/docs/commands/acl.html), or systems like 
 [HashiCorp's Vault](https://www.vaultproject.io/docs/secrets/consul/index.html).
 
@@ -100,7 +99,16 @@ node_prefix "" {
 
 ### ACL Roles
 
-An ACL role is a named 
+-> (Added in Consul 1.5)
+
+An ACL role is a named set of policies and service identities and is composed
+of the following elements:
+
+* **ID** - The policies auto-generated public identifier.
+* **Name** - A unique meaningful name for the role.
+* **Description** - A human readable description of the role. (Optional)
+* **Policy Set** - The list of policies that are applicable for the role.
+* **Service Identity Set** - The list of service identities that are applicable for the role.
 
 ### ACL Tokens
 
@@ -196,6 +204,7 @@ as to whether they are set on servers, clients, or both.
 | [`acl.enabled`](/docs/agent/options.html#acl_enabled) | `REQUIRED` | `REQUIRED` | Controls whether ACLs are enabled |
 | [`acl.default_policy`](/docs/agent/options.html#acl_default_policy) | `OPTIONAL` | `N/A` | Determines whitelist or blacklist mode |
 | [`acl.down_policy`](/docs/agent/options.html#acl_down_policy) | `OPTIONAL` | `OPTIONAL` | Determines what to do when the remote token or policy resolution fails |
+| [`acl.role_ttl`](/docs/agent/options.html#acl_role_ttl) | `OPTIONAL` | `OPTIONAL` | Determines time-to-live for cached ACL Roles |
 | [`acl.policy_ttl`](/docs/agent/options.html#acl_policy_ttl) | `OPTIONAL` | `OPTIONAL` | Determines time-to-live for cached ACL Policies |
 | [`acl.token_ttl`](/docs/agent/options.html#acl_token_ttl) | `OPTIONAL` | `OPTIONAL` | Determines time-to-live for cached ACL Tokens |
 

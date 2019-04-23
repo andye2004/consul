@@ -64,7 +64,7 @@ The table below shows this endpoint's support for
   be able to read ServiceAccount annotations.
 
 For more information on configuring the Kubernetes Auth Method, see
-the [auth method documentation](/docs/acl/acl-auth-methods.html.md).
+the [auth method documentation](/docs/acl/acl-auth-methods.html).
 
 ~> TODO: link to auth method subsection about kubernetes for details
 
@@ -205,7 +205,7 @@ The table below shows this endpoint's support for
   be able to read ServiceAccount annotations.
 
 For more information on configuring the Kubernetes Auth Method, see
-the [auth method documentation](/docs/acl/acl-auth-methods.html.md).
+the [auth method documentation](/docs/acl/acl-auth-methods.html).
 
 ~> TODO: link to auth method subsection about kubernetes for details
 
