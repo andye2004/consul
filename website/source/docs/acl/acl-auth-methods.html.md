@@ -1,7 +1,7 @@
 ---
 layout: "docs"
 page_title: "ACL Auth Methods"
-sidebar_current: "docs-acl-identity-providers"
+sidebar_current: "docs-acl-auth-methods"
 description: |-
   An Auth Method is a component in Consul that performs authentication against a trusted external party to authorize the creation of an appropriately scoped ACL Token usable within the local datacenter.
 ---
@@ -14,8 +14,9 @@ An Auth Method is a component in Consul that performs authentication against a
 trusted external party to authorize the creation of an appropriately scoped ACL
 Token usable within the local datacenter.
 
-The only supported type of auth method in Consul 1.5 is `kubernetes`
-but it is expected that more will come later.
+The only supported type of auth method in Consul 1.5 is
+[`kubernetes`](/docs/acl/auth-methods/kubernetes.html) but it is expected that
+more will come later.
 
 ## Overview
 
@@ -50,6 +51,20 @@ using the API or command line before they can be used by applications.
   binding-rule` subcommands or the corresponding [API
   endpoints](/api/acl/binding-rules.html).
 
+## Binding Rules
+
+Binding rules allow an operator to express a systematic way to automatically
+assign Roles and Service Identities to newly created Tokens without operator intervention. For
+
+[roles](/docs/acl/acl-system.html#acl-roles)
+and
+[service identities](/docs/acl/acl-system.html#acl-service-identities)
+
+authentication originating in a configured Identity Provider that assertion can
+be made with a new construct: Binding Rules.
+
+xxx
+
 ## Login Process
 
 1. Applications can use the `consul login` subcommand or the [login API
@@ -68,93 +83,4 @@ using the API or command line before they can be used by applications.
 5. Applications can use the `consul logout` subcommand or the [logout API
    endpoint](/api/acl/acl.html#logout-from-auth-method) to destroy their token
    when it is no longer required.
-
-## Kubernetes Auth Method
-
-The `kubernetes` auth method type is used to authenticate to Consul using a
-Kubernetes Service Account Token. This method of authentication makes it easy
-to introduce a Consul token into a Kubernetes Pod.
-
-To use an auth method of this type the following are required to be configured:
-
-* **Kubernetes Host** - The address of the Kubernetes API. This should be an
-  address that is reachable from all Consul Servers in your datacenter.
-
-* **Kubernetes CA Certificate** - The PEM encoded CA cert for use by the TLS
-  client used to talk with the Kubernetes API. NOTE: Every line must end with a
-  newline: `\n`
-
-* **Service Account JWT** - A Service Account Token (JWT) used by the Consul
-  leader to access the [TokenReview API](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#create-tokenreview-v1-authentication-k8s-io)
-  and [ServiceAccount API](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#read-serviceaccount-v1-core)
-  to validate application JWTs during login. 
-
-The following is an example RBAC configuration snippet to grant the necessary
-permissions to a service account named `consul-auth-method`:
-
-```yaml
----
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: review-tokens
-  namespace: default
-subjects:
-- kind: ServiceAccount
-  name: consul-auth-method
-  namespace: default
-roleRef:
-  kind: ClusterRole
-  name: system:auth-delegator
-  apiGroup: rbac.authorization.k8s.io
----
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: service-account-getter
-  namespace: default
-rules:
-- apiGroups: [""]
-  resources: ["serviceaccounts"]
-  verbs: ["get"]
----
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: get-service-accounts
-  namespace: default
-subjects:
-- kind: ServiceAccount
-  name: consul-auth-method
-  namespace: default
-roleRef:
-  kind: ClusterRole
-  name: service-account-getter
-  apiGroup: rbac.authorization.k8s.io
-```
-
-### Kubernetes Login Process
-
-1. The Service Account JWT given to the Consul leader initially accesses the
-   TokenReview API to validate the provided JWT is still valid. Kubernetes
-   should be running with `--service-account-lookup`. This is defaulted to true
-   in Kubernetes 1.7, but any versions prior should ensure the Kubernetes API
-   server is started with this setting. 
-
-       The trusted values of `serviceaccount.namespace`, `serviceaccount.name`, and
-       `serviceaccount.uid` are returned.
-
-2. After validating that the provided JWT is still valid, the Consul leader
-   looks for an optional annotation of `consul.hashicorp.com/service-name` on
-   the resolved service account using the ServiceAccount API.
-
-       If one is found the trusted value of `serviceaccount.name` is overridden
-       with that value.
-
-3. The rest of the login flow proceeds normally.
-
-### Binding Rules
-
-
-
 

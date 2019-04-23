@@ -37,21 +37,20 @@ The table below shows this endpoint's support for
 
 - `Description` `(string: "")` - Free form human readable description of the token.
 
-- `Policies` `(array<PolicyLink>)` - The list of policies that should
-   be applied to the token. A PolicyLink is an object with an "ID" and/or "Name" field
-   to specify a policy. With the PolicyLink, tokens can be linked to policies either by the
-   policy name or by the policy ID. When policies are linked by name they will be
-   internally resolved to the policy ID. With linking tokens internally by IDs,
-   Consul enables policy renaming without breaking tokens.
+- `Policies` `(array<PolicyLink>)` - The list of policies that should be
+  applied to the token. A PolicyLink is an object with an "ID" and/or "Name"
+  field to specify a policy. With the PolicyLink, tokens can be linked to
+  policies either by the policy name or by the policy ID. When policies are
+  linked by name they will be internally resolved to the policy ID. With
+  linking tokens internally by IDs, Consul enables policy renaming without
+  breaking tokens.
 
 - `Roles` `(array<RoleLink>)` - The list of roles that should be applied to the
-   token. A RoleLink is an object with an "ID" and/or "Name" field to specify a
-   role. With the RoleLink, tokens can be linked to roles either by the role
-   name or by the role ID. When roles are linked by name they will be internally
-   resolved to the role ID. With linking tokens internally by IDs, Consul
-   enables role renaming without breaking tokens. Added in Consul 1.5.0.
-
-~> TODO:where is the best place to mention RoleLink.BoundName?
+  token. A RoleLink is an object with an "ID" and/or "Name" field to specify a
+  role. With the RoleLink, tokens can be linked to roles either by the role
+  name or by the role ID. When roles are linked by name they will be internally
+  resolved to the role ID. With linking tokens internally by IDs, Consul
+  enables role renaming without breaking tokens. Added in Consul 1.5.0.
 
 - `ServiceIdentities` `(array<ServiceIdentity>)` - The list of service
   identities that should be applied to the token.  Added in Consul 1.5.0.
@@ -59,23 +58,22 @@ The table below shows this endpoint's support for
   - `ServiceName` `(string: <required>)` - The name of the service.
 
   - `Datacenters` `(array<string>)` - Specifies the datacenters the effective
-    policy is valid within. When no datacenters are provided the 
-    [effective policy](/docs/acl/acl-system.html#acl-service-identities) is
-    valid in all datacenters including those which do not yet exist but may in
-    the future.
+    policy is valid within. When no datacenters are provided the [effective
+    policy](/docs/acl/acl-system.html#acl-service-identities) is valid in all
+    datacenters including those which do not yet exist but may in the future.
 
-- `Local` `(bool: false)` - If true, indicates that the token should not be replicated
-   globally and instead be local to the current datacenter.
+- `Local` `(bool: false)` - If true, indicates that the token should not be
+  replicated globally and instead be local to the current datacenter.
 
 - `ExpirationTime` `(time: "")`- If set this represents the point after which a
-  token should be considered revoked and is eligible for destruction. The default
-  unset value represents NO expiration. Added in Consul 1.5.0.
+  token should be considered revoked and is eligible for destruction. The
+  default unset value represents NO expiration. Added in Consul 1.5.0.
 
 ~> TODO: mention hard coded min/max limits
 ~> TODO: indicate this is a pointer?
 
-- `ExpirationTTL` `(duration: 0s)` - This is a convenience field and if set will
-  initialize the `ExpirationTime` field to a value of `CreateTime +
+- `ExpirationTTL` `(duration: 0s)` - This is a convenience field and if set
+  will initialize the `ExpirationTime` field to a value of `CreateTime +
   ExpirationTTL`. This field is not persisted beyond its initial use. Can be
   specified in the form of `"10s"` or `"5m"` (i.e., 10 seconds or 5 minutes,
   respectively). Added in Consul 1.5.0.
@@ -280,18 +278,18 @@ The table below shows this endpoint's support for
 - `Description` `(string: "")` - Free form human readable description of this token.
 
 - `Policies` `(array<PolicyLink>)` - This is the list of policies that should
-   be applied to this token. A PolicyLink is an object with an "ID" and/or "Name" field
-   to specify a policy. With this tokens can be linked to policies either by the
-   policy name or by the policy ID. When policies are linked by name they will
-   internally be resolved to the policy ID. With linking tokens internally by IDs,
-   Consul enables policy renaming without breaking tokens.
+  be applied to this token. A PolicyLink is an object with an "ID" and/or
+  "Name" field to specify a policy. With this tokens can be linked to policies
+  either by the policy name or by the policy ID. When policies are linked by
+  name they will internally be resolved to the policy ID. With linking tokens
+  internally by IDs, Consul enables policy renaming without breaking tokens.
 
 - `Roles` `(array<RoleLink>)` - The list of roles that should be applied to the
-   token. A RoleLink is an object with an "ID" and/or "Name" field to specify a
-   role. With the RoleLink, tokens can be linked to roles either by the role
-   name or by the role ID. When roles are linked by name they will be internally
-   resolved to the role ID. With linking tokens internally by IDs, Consul
-   enables role renaming without breaking tokens.
+  token. A RoleLink is an object with an "ID" and/or "Name" field to specify a
+  role. With the RoleLink, tokens can be linked to roles either by the role
+  name or by the role ID. When roles are linked by name they will be internally
+  resolved to the role ID. With linking tokens internally by IDs, Consul
+  enables role renaming without breaking tokens.
 
 ~> TODO:where is the best place to mention RoleLink.BoundName?
 
@@ -301,16 +299,15 @@ The table below shows this endpoint's support for
   - `ServiceName` `(string: <required>)` - The name of the service.
 
   - `Datacenters` `(array<string>)` - Specifies the datacenters the effective
-    policy is valid within. When no datacenters are provided the 
-    [effective policy](/docs/acl/acl-system.html#acl-service-identities) is
-    valid in all datacenters including those which do not yet exist but may in
-    the future.
+    policy is valid within. When no datacenters are provided the [effective
+    policy](/docs/acl/acl-system.html#acl-service-identities) is valid in all
+    datacenters including those which do not yet exist but may in the future.
 
-- `Local` `(bool: false)` - If true, indicates that this token should not be replicated
-   globally and instead be local to the current datacenter. This value must match the
-   existing value or the request will return an error.
+- `Local` `(bool: false)` - If true, indicates that this token should not be
+  replicated globally and instead be local to the current datacenter. This
+  value must match the existing value or the request will return an error.
 
-- `IDPName` `(string: "")` - Specifies the name of the identity provider that
+- `AuthMethod` `(string: "")` - Specifies the name of the auth method that
   created this token. This field is immutable so if present in the body then it
   must match the existing value. If not present then the value will be filled
   in by Consul.
@@ -512,8 +509,8 @@ The table below shows this endpoint's support for
 - `role` `(string: "")` - Filters the token list to those tokens that are
   linked with the specific role ID.
 
-- `idp` `(string: "")` - Filters the token list to those tokens that are
-  linked with the specific named identity provider.
+- `authmethod` `(string: "")` - Filters the token list to those tokens that are
+  linked with the specific named auth method.
 
 ## Sample Request
 
