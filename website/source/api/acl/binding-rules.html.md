@@ -1,28 +1,28 @@
 ---
 layout: api
-page_title: ACL Role Binding Rules - HTTP API
-sidebar_current: api-acl-role-binding-rules
+page_title: ACL Binding Rules - HTTP API
+sidebar_current: api-acl-binding-rules
 description: |-
-  The /acl/rolebindingrule endpoints manage Consul's ACL Role Binding Rules.
+  The /acl/binding-rule endpoints manage Consul's ACL Binding Rules.
 ---
 
 -> **1.5.0+:** The APIs are available in Consul versions 1.5.0 and later.
 
-# ACL Role Binding Rule HTTP API
+# ACL Binding Rule HTTP API
 
-The `/acl/rolebindingrule` endpoints [create](#create-a-role-binding-rule),
-[read](#read-a-role-binding-rule), [update](#update-a-role-binding-rule),
-[list](#list-roles) and [delete](#delete-a-role-binding-rule)  ACL role binding
+The `/acl/binding-rule` endpoints [create](#create-a-binding-rule),
+[read](#read-a-binding-rule), [update](#update-a-binding-rule),
+[list](#list-binding-rules) and [delete](#delete-a-binding-rule)  ACL binding
 rules in Consul.  For more information about ACLs, please see the 
 [ACL Guide](/docs/guides/acl.html).
 
-## Create a Role Binding Rule
+## Create a Binding Rule
 
-This endpoint creates a new ACL role binding rule.
+This endpoint creates a new ACL binding rule.
 
 | Method | Path                         | Produces                   |
 | ------ | ---------------------------- | -------------------------- |
-| `PUT`  | `/acl/rolebindingrule`       | `application/json`         |
+| `PUT`  | `/acl/binding-rule`          | `application/json`         |
 
 The table below shows this endpoint's support for
 [blocking queries](/api/index.html#blocking-queries),
@@ -36,51 +36,81 @@ The table below shows this endpoint's support for
 
 ### Parameters
 
-- `Description` `(string: "")` - Free form human readable description of the role binding rule.
+- `Description` `(string: "")` - Free form human readable description of the binding rule.
 
-- `IDPName` `(string: <required>)` - The name of the identity provider that
-  this rule applies to. This field is immutable.
+- `AuthMethod` `(string: <required>)` - The name of the auth method that this
+  rule applies to. This field is immutable.
 
-- `RoleName` `(string: <required>)` - The name of a role to bind to. Can
-  optionally use `{{ field_name }}` template syntax to generate a name using available
-  identity provider fields. Available fields are documented in the
-  [Identity Provider Guide](/docs/guides/acl-identity-providers.html).
+- `Selector` `(string: "")` - Specifies the expression used to match this rule
+  against valid identities returned from an auth method validation. If empty
+  this binding rule matches all valid identities returned from the auth method. For example: 
 
-- `MustExist` `(bool: false)` - If true, indicates that at login time the named
-  role must already exist for this role binding rule to apply. This is described
-  in more detail in the [Identity Provider Guide](/docs/guides/acl-identity-providers.html).
+    ```text
+    serviceaccount.namespace==default and serviceaccount.name!=vault
+    ```
 
-- `Matches` `(array<Match>)` - The list of match selectors. Individual matches
-  logically are used as a disjunction (OR) when matching identities presented.
-  If unset or empty the role binding rule will match all identities in the 
-  configured identity provider.
+- `BindType` `(string: <required>)` - Specifies the way this binding rule is
+  affects a token created at login. 
+  
+  - `BindType=service` - The computed bind name value is used as an
+    `ACLServiceIdentity.ServiceName` field in the token that is created.
 
-  - `Selector` `(array<string>)` - A non-empty list of field selectors.
-    Elements logically are used as a conjunction (AND) when matching identities
-    presented. The syntax of each element is of the form `field=value` and
-    available fields are documented in the 
-    [Identity Provider Guide](/docs/guides/acl-identity-providers.html).
+        ```json
+        { ...other fields...
+            "ServiceIdentities": [
+                { "ServiceName": "<computed BindName>" }
+            ]
+        }
+        ```
+
+  - `BindType=role` - The computed bind name value is used as a `RoleLink.Name`
+    field in the token that is created. This binding rule will only apply if a
+    role with the given name exists at login-time. If it does not then this
+    rule is ignored.
+
+        ```json
+        { ...other fields...
+            "Roles": [
+                { "Name": "<computed BindName>" }
+            ]
+        }
+        ```
+
+- `BindName` `(string: <required>)` - The name to bind to a token at
+  login-time.  What it binds to can be adjusted with different values of the
+  `BindType` field. This can either be a plain string, or lightly templated
+  using [HIL syntax](https://github.com/hashicorp/hil) to interpolate the same
+  values that are usable by the `Selector` syntax. For example:
+  
+    ```text
+    prefixed-${serviceaccount.name}
+    ```
+
+### Selector Fields for Kubernetes Auth Method
+
+~> TODO: move all of this into the /docs/ instead of duplicating between create/update?
+
+~> TODO: link to generic docs on the query language?
+
+These are the available operations supported on the various auth method
+identity fields:
+
+| Field                      | Supported Selector Operations      | Can be Interpolated |
+| -------------------------- | ---------------------------------- | ------------------- |
+| `serviceaccount.namespace` | Equal, Not Equal                   | yes                 |
+| `serviceaccount.name`      | Equal, Not Equal                   | yes                 |
+| `serviceaccount.uid`       | Equal, Not Equal                   | yes                 |
+
   
 ### Sample Payload
 
 ```json
 {
     "Description": "example rule",
-    "IDPName": "minikube",
-    "Matches": [
-        {
-            "Selector": [
-                "serviceaccount.namespace=default"
-            ]
-        },
-        {
-            "Selector": [
-                "serviceaccount.namespace=dev",
-                "serviceaccount.name=demo"
-            ]
-        }
-    ],
-    "RoleName": "{{ serviceaccount.name }}"
+    "AuthMethod": "minikube",
+    "Selector": "serviceaccount.namespace==default",
+    "BindType": "service",
+    "BindName": "{{ serviceaccount.name }}"
 }
 ```
 
@@ -89,7 +119,7 @@ The table below shows this endpoint's support for
 ```sh
 $ curl -X PUT \
     --data @payload.json \
-    http://127.0.0.1:8500/v1/acl/rolebindingrule
+    http://127.0.0.1:8500/v1/acl/binding-rule
 ```
 
 ### Sample Response
@@ -98,35 +128,24 @@ $ curl -X PUT \
 {
     "ID": "000ed53c-e2d3-e7e6-31a5-c19bc3518a3d",
     "Description": "example rule",
-    "IDPName": "minikube",
-    "Matches": [
-        {
-            "Selector": [
-                "serviceaccount.namespace=default"
-            ]
-        },
-        {
-            "Selector": [
-                "serviceaccount.namespace=dev",
-                "serviceaccount.name=demo"
-            ]
-        }
-    ],
-    "RoleName": "{{ serviceaccount.name }}",
+    "AuthMethod": "minikube",
+    "Selector": "serviceaccount.namespace==default",
+    "BindType": "service",
+    "BindName": "{{ serviceaccount.name }}",
     "CreateIndex": 17,
     "ModifyIndex": 17
 }
 ```
 
-## Read a Role Binding Rule
+## Read a Binding Rule
 
-This endpoint reads an ACL role binding rule with the given ID. If no role
+This endpoint reads an ACL binding rule with the given ID. If no role
 binding rule exists with the given ID, a 404 is returned instead of a 200
 response.
 
 | Method | Path                         | Produces                   |
 | ------ | ---------------------------- | -------------------------- |
-| `GET`  | `/acl/rolebindingrule/:id`   | `application/json`         |
+| `GET`  | `/acl/binding-rule/:id`      | `application/json`         |
 
 The table below shows this endpoint's support for
 [blocking queries](/api/index.html#blocking-queries),
@@ -140,13 +159,13 @@ The table below shows this endpoint's support for
 
 ### Parameters
 
-- `id` `(string: <required>)` - Specifies the UUID of the ACL role binding rule
+- `id` `(string: <required>)` - Specifies the UUID of the ACL binding rule
   to read. This is required and is specified as part of the URL path.
 
 ### Sample Request
 
 ```sh
-$ curl -X GET http://127.0.0.1:8500/v1/acl/rolebindingrule/000ed53c-e2d3-e7e6-31a5-c19bc3518a3d
+$ curl -X GET http://127.0.0.1:8500/v1/acl/binding-rule/000ed53c-e2d3-e7e6-31a5-c19bc3518a3d
 ```
 
 ### Sample Response
@@ -155,33 +174,22 @@ $ curl -X GET http://127.0.0.1:8500/v1/acl/rolebindingrule/000ed53c-e2d3-e7e6-31
 {
     "ID": "000ed53c-e2d3-e7e6-31a5-c19bc3518a3d",
     "Description": "example rule",
-    "IDPName": "minikube",
-    "Matches": [
-        {
-            "Selector": [
-                "serviceaccount.namespace=default"
-            ]
-        },
-        {
-            "Selector": [
-                "serviceaccount.namespace=dev",
-                "serviceaccount.name=demo"
-            ]
-        }
-    ],
-    "RoleName": "{{ serviceaccount.name }}",
+    "AuthMethod": "minikube",
+    "Selector": "serviceaccount.namespace==default",
+    "BindType": "service",
+    "BindName": "{{ serviceaccount.name }}",
     "CreateIndex": 17,
     "ModifyIndex": 17
 }
 ```
 
-## Update a Role Binding Rule
+## Update a Binding Rule
 
-This endpoint updates an existing ACL role binding rule.
+This endpoint updates an existing ACL binding rule.
 
 | Method | Path                         | Produces                   |
 | ------ | ---------------------------- | -------------------------- |
-| `PUT`  | `/acl/rolebindingrule/:id`   | `application/json`         |
+| `PUT`  | `/acl/binding-rule/:id`      | `application/json`         |
 
 The table below shows this endpoint's support for
 [blocking queries](/api/index.html#blocking-queries),
@@ -195,51 +203,70 @@ The table below shows this endpoint's support for
 
 ### Parameters
 
-- `ID` `(string: <required>)` - Specifies the ID of the role binding rule to update. This is
-   required in the URL path but may also be specified in the JSON body. If specified
-   in both places then they must match exactly.
+- `ID` `(string: <required>)` - Specifies the ID of the binding rule to update.
+  This is required in the URL path but may also be specified in the JSON body.
+  If specified in both places then they must match exactly.
 
-- `Description` `(string: "")` - Free form human readable description of the role binding rule.
+- `Description` `(string: "")` - Free form human readable description of the binding rule.
 
-- `IDPName` `(string: <required>)` - Specifies the name of the identity
-  provider that this rule applies to. This field is immutable so if present in
+- `AuthMethod` `(string: <required>)` - Specifies the name of the auth
+  method that this rule applies to. This field is immutable so if present in
   the body then it must match the existing value. If not present then the value
   will be filled in by Consul.
 
-- `RoleName` `(string: <required>)` - The name of a role to bind to. Can
-  optionally use `{{ field_name }}` template syntax to generate a name using available
-  identity provider fields. Available fields are documented in the
-  [Identity Provider Guide](/docs/guides/acl-identity-providers.html).
+- `Selector` `(string: "")` - Specifies the expression used to match this rule
+  against valid identities returned from an auth method validation. If empty
+  this binding rule matches all valid identities returned from the auth method. For example: 
 
-- `MustExist` `(bool: false)` - If true, indicates that at login time the named
-  role must already exist for this role binding rule to apply. This is described
-  in more detail in the [Identity Provider Guide](/docs/guides/acl-identity-providers.html).
+    ```text
+    serviceaccount.namespace==default and serviceaccount.name!=vault
+    ```
 
-- `Matches` `(array<Match>)` - The list of match selectors. Individual matches
-  logically are used as a disjunction (OR) when matching identities presented.
-  If unset or empty the role binding rule will match all identities in the 
-  configured identity provider.
-
-  - `Selector` `(array<string>)` - A non-empty list of field selectors.
-    Elements logically are used as a conjunction (AND) when matching identities
-    presented. The syntax of each element is of the form `field=value` and
-    available fields are documented in the 
-    [Identity Provider Guide](/docs/guides/acl-identity-providers.html).
+- `BindType` `(string: <required>)` - Specifies the way this binding rule is
+  affects a token created at login. 
   
+  - `BindType=service` - The computed bind name value is used as an
+    `ACLServiceIdentity.ServiceName` field in the token that is created.
+
+        ```json
+        { ...other fields...
+            "ServiceIdentities": [
+                { "ServiceName": "<computed BindName>" }
+            ]
+        }
+        ```
+
+  - `BindType=role` - The computed bind name value is used as a `RoleLink.Name`
+    field in the token that is created. This binding rule will only apply if a
+    role with the given name exists at login-time. If it does not then this
+    rule is ignored.
+
+        ```json
+        { ...other fields...
+            "Roles": [
+                { "Name": "<computed BindName>" }
+            ]
+        }
+        ```
+
+- `BindName` `(string: <required>)` - The name to bind to a token at
+  login-time.  What it binds to can be adjusted with different values of the
+  `BindType` field. This can either be a plain string, or lightly templated
+  using [HIL syntax](https://github.com/hashicorp/hil) to interpolate the same
+  values that are usable by the `Selector` syntax. For example:
+  
+    ```text
+    prefixed-${serviceaccount.name}
+    ```
 
 ### Sample Payload
 
 ```json
 {
     "Description": "updated rule",
-    "Matches": [
-        {
-            "Selector": [
-                "serviceaccount.namespace=default"
-            ]
-        }
-    ],
-    "RoleName": "k8s-{{ serviceaccount.name }}"
+    "Selector": "serviceaccount.namespace=dev",
+    "BindType": "role",
+    "BindName": "{{ serviceaccount.name }}"
 }
 ```
 
@@ -248,7 +275,7 @@ The table below shows this endpoint's support for
 ```sh
 $ curl -X PUT \
     --data @payload.json \
-    http://127.0.0.1:8500/v1/acl/rolebindingrule/000ed53c-e2d3-e7e6-31a5-c19bc3518a3d
+    http://127.0.0.1:8500/v1/acl/binding-rule/000ed53c-e2d3-e7e6-31a5-c19bc3518a3d
 ```
 
 ### Sample Response
@@ -257,27 +284,22 @@ $ curl -X PUT \
 {
     "ID": "000ed53c-e2d3-e7e6-31a5-c19bc3518a3d",
     "Description": "updated rule",
-    "IDPName": "minikube",
-    "Matches": [
-        {
-            "Selector": [
-                "serviceaccount.namespace=default"
-            ]
-        }
-    ],
-    "RoleName": "k8s-{{ serviceaccount.name }}",
+    "AuthMethod": "minikube",
+    "Selector": "serviceaccount.namespace=dev",
+    "BindType": "role",
+    "BindName": "{{ serviceaccount.name }}",
     "CreateIndex": 17,
     "ModifyIndex": 18
 }
 ```
 
-## Delete a Role Binding Rule
+## Delete a Binding Rule
 
-This endpoint deletes an ACL role binding rule.
+This endpoint deletes an ACL binding rule.
 
 | Method   | Path                      | Produces                   |
 | -------- | ------------------------- | -------------------------- |
-| `DELETE` | `/acl/rolebindingrule/:id`| `application/json`         |
+| `DELETE` | `/acl/binding-rule/:id`   | `application/json`         |
 
 Even though the return type is application/json, the value is either true or
 false indicating whether the delete succeeded.
@@ -294,14 +316,14 @@ The table below shows this endpoint's support for
 
 ### Parameters
 
-- `id` `(string: <required>)` - Specifies the UUID of the ACL role binding rule
-  to delete. This is required and is specified as part of the URL path.
+- `id` `(string: <required>)` - Specifies the UUID of the ACL binding rule to
+  delete. This is required and is specified as part of the URL path.
 
 ### Sample Request
 
 ```sh
 $ curl -X DELETE \
-    http://127.0.0.1:8500/v1/acl/rolebindingrule/000ed53c-e2d3-e7e6-31a5-c19bc3518a3d
+    http://127.0.0.1:8500/v1/acl/binding-rule/000ed53c-e2d3-e7e6-31a5-c19bc3518a3d
 ```
 
 ### Sample Response
@@ -309,13 +331,13 @@ $ curl -X DELETE \
 true
 ```
 
-## List Role Binding Rules
+## List Binding Rules
 
-This endpoint lists all the ACL role binding rules.
+This endpoint lists all the ACL binding rules.
 
 | Method | Path                         | Produces                   |
 | ------ | ---------------------------- | -------------------------- |
-| `GET`  | `/acl/rolebindingrules`                 | `application/json`         |
+| `GET`  | `/acl/binding-rules`         | `application/json`         |
 
 The table below shows this endpoint's support for
 [blocking queries](/api/index.html#blocking-queries),
@@ -329,13 +351,13 @@ The table below shows this endpoint's support for
 
 ## Parameters
 
-- `idp` `(string: "")` - Filters the role binding rule list to those role
-  binding rules that are linked with the specific named identity provider.
+- `authmethod` `(string: "")` - Filters the binding rule list to those binding
+  rules that are linked with the specific named auth method.
 
 ## Sample Request
 
 ```sh
-$ curl -X GET http://127.0.0.1:8500/v1/acl/rolebindingrules
+$ curl -X GET http://127.0.0.1:8500/v1/acl/binding-rules
 ```
 
 ### Sample Response
@@ -345,23 +367,18 @@ $ curl -X GET http://127.0.0.1:8500/v1/acl/rolebindingrules
     {
         "ID": "000ed53c-e2d3-e7e6-31a5-c19bc3518a3d",
         "Description": "example 1",
-        "IDPName": "minikube-1",
-        "RoleName": "k8s-{{ serviceaccount.name }}",
+        "AuthMethod": "minikube-1",
+        "BindType": "service",
+        "BindName": "k8s-{{ serviceaccount.name }}",
         "CreateIndex": 17,
         "ModifyIndex": 17
     },
     {
         "ID": "b4f0a0a3-69f2-7a4f-6bef-326034ace9fa",
         "Description": "example 2",
-        "IDPName": "minikube-2",
-        "Matches": [
-            {
-                "Selector": [
-                    "serviceaccount.namespace=default"
-                ]
-            }
-        ],
-        "RoleName": "k8s-{{ serviceaccount.name }}",
+        "AuthMethod": "minikube-2",
+        "Selector": "serviceaccount.namespace==default",
+        "BindName": "k8s-{{ serviceaccount.name }}",
         "CreateIndex": 18,
         "ModifyIndex": 18
     }
