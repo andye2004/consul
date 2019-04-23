@@ -1,28 +1,28 @@
 ---
 layout: api
-page_title: ACL Identity Providers - HTTP API
-sidebar_current: api-acl-identity-providers
+page_title: ACL Auth Methods - HTTP API
+sidebar_current: api-acl-auth-methods
 description: |-
-  The /acl/idp endpoints manage Consul's ACL Identity Providers.
+  The /acl/auth-method endpoints manage Consul's ACL Auth Methods.
 ---
 
 -> **1.5.0+:**  The APIs are available in Consul versions 1.5.0 and later.
 
-# ACL Identity Provider HTTP API
+# ACL Auth Method HTTP API
 
-The `/acl/idp` endpoints [create](#create-an-identity-provider),
-[read](#read-an-identity-provider), [update](#update-an-identity-provider),
-[list](#list-identity-providers) and [delete](#delete-an-identity-provider)
-ACL identity providers in Consul.  For more information about ACLs, please see
+The `/acl/auth-method` endpoints [create](#create-an-auth-method),
+[read](#read-an-auth-method), [update](#update-an-auth-method),
+[list](#list-auth-methods) and [delete](#delete-an-auth-method)
+ACL auth methods in Consul.  For more information about ACLs, please see
 the [ACL Guide](/docs/guides/acl.html).
 
-## Create an Identity Provider
+## Create an Auth Method
 
-This endpoint creates a new ACL identity provider.
+This endpoint creates a new ACL auth method.
 
 | Method | Path                         | Produces                   |
 | ------ | ---------------------------- | -------------------------- |
-| `PUT`  | `/acl/idp`                   | `application/json`         |
+| `PUT`  | `/acl/auth-method`           | `application/json`         |
 
 The table below shows this endpoint's support for
 [blocking queries](/api/index.html#blocking-queries),
@@ -36,45 +36,50 @@ The table below shows this endpoint's support for
 
 ### Parameters
 
-- `Name` `(string: <required>)` - Specifies a name for the ACL identity
-  provider. The name can only contain alphanumeric characters as well as `-`
-  and `_` and must be unique. This field is immutable.
+- `Name` `(string: <required>)` - Specifies a name for the ACL auth method. The
+  name can only contain alphanumeric characters as well as `-` and `_` and must
+  be unique. This field is immutable.
    
-~> TODO(rb): update this.
+- `Type` `(string: <required>)` - The type of auth method being configured.
+  The only allowed value in Consul 1.5.0 is `"kubernetes"`. This field is
+  immutable.
 
-- `Description` `(string: "")` - Free form human readable description of the identity provider.
+- `Description` `(string: "")` - Free form human readable description of the
+  auth method.
 
-- `Type` `(string: <required>)` - The type of identity provider being
-  configured.  The only allowed value in Consul 1.5.0 is `"kubernetes"`. This
-  field is immutable.
+- `Config` `(map[string]string: <required>)` - The raw configuration to use for
+  the chosen auth method. Contents will vary depending upon the type chosen.
 
-#### Parameters for Type=kubernetes
+#### Config Parameters for Type=kubernetes
 
-~> TODO: link to idp subsection about kubernetes for details
+- `Host` `(string: <required>)` - Must be a host string, a host:port pair, or a
+  URL to the base of the Kubernetes API server. 
 
-- `KubernetesHost` `(string: <required>)` - Must be a host string, a host:port
-  pair, or a URL to the base of the Kubernetes API server. 
+- `CACert` `(string: <required>)` - PEM encoded CA cert for use by the TLS
+  client used to talk with the Kubernetes API. NOTE: Every line must end with a
+  newline (`\n`).
 
-- `KubernetesCACert` `(string: <required>)` - PEM encoded CA cert for use by
-  the TLS client used to talk with the Kubernetes API. NOTE: Every line must
-  end with a newline (`\n`).
+- `ServiceAccountJWT` `(string: <required>)` A service account JWT used to
+  access the TokenReview API to validate other JWTs during login. It also must
+  be able to read ServiceAccount annotations.
 
-- `KubernetesServiceAccountJWT` `(string: <required>)` A service account JWT
-  used to access the TokenReview API to validate other JWTs during login. It
-  also must be able to read ServiceAccount annotations. 
+For more information on configuring the Kubernetes Auth Method, see
+the [auth method documentation](/docs/acl/acl-auth-methods.html.md).
 
-~> TODO: link to idp subsection about kubernetes for details
+~> TODO: link to auth method subsection about kubernetes for details
 
 ### Sample Payload
 
 ```json
 {
     "Name": "minikube",
-    "Description": "dev minikube cluster",
     "Type": "kubernetes",
-    "KubernetesHost": "https://192.0.2.42:8443",
-    "KubernetesCACert": "-----BEGIN CERTIFICATE-----\n...-----END CERTIFICATE-----\n",
-    "KubernetesServiceAccountJWT": "eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9..."
+    "Description": "dev minikube cluster",
+    "Config": {
+        "Host": "https://192.0.2.42:8443",
+        "CACert": "-----BEGIN CERTIFICATE-----\n...-----END CERTIFICATE-----\n",
+        "ServiceAccountJWT": "eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9..."
+    }
 }
 ```
 
@@ -83,7 +88,7 @@ The table below shows this endpoint's support for
 ```sh
 $ curl -X PUT \
     --data @payload.json \
-    http://127.0.0.1:8500/v1/acl/idp
+    http://127.0.0.1:8500/v1/acl/auth-method
 ```
 
 ### Sample Response
@@ -91,25 +96,27 @@ $ curl -X PUT \
 ```json
 {
     "Name": "minikube",
-    "Description": "dev minikube cluster",
     "Type": "kubernetes",
-    "KubernetesHost": "https://192.0.2.42:8443",
-    "KubernetesCACert": "-----BEGIN CERTIFICATE-----\n...-----END CERTIFICATE-----\n",
-    "KubernetesServiceAccountJWT": "eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9...",
+    "Description": "dev minikube cluster",
+    "Config": {
+        "Host": "https://192.0.2.42:8443",
+        "CACert": "-----BEGIN CERTIFICATE-----\n...-----END CERTIFICATE-----\n",
+        "ServiceAccountJWT": "eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9..."
+    },
     "CreateIndex": 15,
     "ModifyIndex": 15
 }
 ```
 
-## Read an Identity Provider
+## Read an Auth Method
 
-This endpoint reads an ACL identity provider with the given name. If no
-identity provider exists with the given name, a 404 is returned instead of a
+This endpoint reads an ACL auth method with the given name. If no
+auth method exists with the given name, a 404 is returned instead of a
 200 response.
 
 | Method | Path                         | Produces                   |
 | ------ | ---------------------------- | -------------------------- |
-| `GET`  | `/acl/idp/:name`             | `application/json`         |
+| `GET`  | `/acl/auth-method/:name`     | `application/json`         |
 
 The table below shows this endpoint's support for
 [blocking queries](/api/index.html#blocking-queries),
@@ -123,13 +130,13 @@ The table below shows this endpoint's support for
 
 ### Parameters
 
-- `name` `(string: <required>)` - Specifies the name of the ACL identity
-  provider to read. This is required and is specified as part of the URL path.
+- `name` `(string: <required>)` - Specifies the name of the ACL auth method to
+  read. This is required and is specified as part of the URL path.
 
 ### Sample Request
 
 ```sh
-$ curl -X GET http://127.0.0.1:8500/v1/acl/idp/minikube
+$ curl -X GET http://127.0.0.1:8500/v1/acl/auth-method/minikube
 ```
 
 ### Sample Response
@@ -137,23 +144,25 @@ $ curl -X GET http://127.0.0.1:8500/v1/acl/idp/minikube
 ```json
 {
     "Name": "minikube",
-    "Description": "dev minikube cluster",
     "Type": "kubernetes",
-    "KubernetesHost": "https://192.0.2.42:8443",
-    "KubernetesCACert": "-----BEGIN CERTIFICATE-----\n...-----END CERTIFICATE-----\n",
-    "KubernetesServiceAccountJWT": "eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9...",
+    "Description": "dev minikube cluster",
+    "Config": {
+        "Host": "https://192.0.2.42:8443",
+        "CACert": "-----BEGIN CERTIFICATE-----\n...-----END CERTIFICATE-----\n",
+        "ServiceAccountJWT": "eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9..."
+    },
     "CreateIndex": 15,
     "ModifyIndex": 224
 }
 ```
 
-## Update an Identity Provider
+## Update an Auth Method
 
-This endpoint updates an existing ACL identity provider.
+This endpoint updates an existing ACL auth method.
 
 | Method | Path                         | Produces                   |
 | ------ | ---------------------------- | -------------------------- |
-| `PUT`  | `/acl/idp/:name`             | `application/json`         |
+| `PUT`  | `/acl/auth-method/:name`     | `application/json`         |
 
 The table below shows this endpoint's support for
 [blocking queries](/api/index.html#blocking-queries),
@@ -167,33 +176,38 @@ The table below shows this endpoint's support for
 
 ### Parameters
 
-- `Name` `(string: <required>)` - Specifies the name of the identity provider to update. This is
-   required in the URL path but may also be specified in the JSON body. If specified
-   in both places then they must match exactly.
+- `Name` `(string: <required>)` - Specifies the name of the auth method to
+  update. This is required in the URL path but may also be specified in the
+  JSON body. If specified in both places then they must match exactly.
 
-- `Description` `(string: "")` - Free form human readable description of the identity provider.
+- `Type` `(string: <required>)` - Specifies the type of the auth method being
+  updated.  This field is immutable so if present in the body then it must
+  match the existing value. If not present then the value will be filled in by
+  Consul.
 
-- `Type` `(string: <required>)` - Specifies the type of the identity provider
-  being updated.  This field is immutable so if present in the body then it
-  must match the existing value. If not present then the value will be filled
-  in by Consul.
+- `Description` `(string: "")` - Free form human readable description of the
+  auth method.
 
-#### Parameters for Type=kubernetes
+- `Config` `(map[string]string: <required>)` - The raw configuration to use for
+  the chosen auth method. Contents will vary depending upon the type chosen.
 
-~> TODO: link to idp subsection about kubernetes for details
+#### Config Parameters for Type=kubernetes
 
-- `KubernetesHost` `(string: <required>)` - Must be a host string, a host:port
-  pair, or a URL to the base of the Kubernetes API server. 
+- `Host` `(string: <required>)` - Must be a host string, a host:port pair, or a
+  URL to the base of the Kubernetes API server. 
 
-- `KubernetesCACert` `(string: <required>)` - PEM encoded CA cert for use by
-  the TLS client used to talk with the Kubernetes API. NOTE: Every line must
-  end with a newline (`\n`).
+- `CACert` `(string: <required>)` - PEM encoded CA cert for use by the TLS
+  client used to talk with the Kubernetes API. NOTE: Every line must end with a
+  newline (`\n`).
 
-- `KubernetesServiceAccountJWT` `(string: <required>)` A service account JWT
-  used to access the TokenReview API to validate other JWTs during login. It
-  also must be able to read ServiceAccount annotations. 
+- `ServiceAccountJWT` `(string: <required>)` A service account JWT used to
+  access the TokenReview API to validate other JWTs during login. It also must
+  be able to read ServiceAccount annotations.
 
-~> TODO: link to idp subsection about kubernetes for details
+For more information on configuring the Kubernetes Auth Method, see
+the [auth method documentation](/docs/acl/acl-auth-methods.html.md).
+
+~> TODO: link to auth method subsection about kubernetes for details
 
 ### Sample Payload
 
@@ -201,9 +215,11 @@ The table below shows this endpoint's support for
 {
     "Name": "minikube",
     "Description": "updated name",
-    "KubernetesHost": "https://192.0.2.42:8443",
-    "KubernetesCACert": "-----BEGIN CERTIFICATE-----\n...-----END CERTIFICATE-----\n",
-    "KubernetesServiceAccountJWT": "eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9..."
+    "Config": {
+        "Host": "https://192.0.2.42:8443",
+        "CACert": "-----BEGIN CERTIFICATE-----\n...-----END CERTIFICATE-----\n",
+        "ServiceAccountJWT": "eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9..."
+    }
 }
 ```
 
@@ -212,7 +228,7 @@ The table below shows this endpoint's support for
 ```sh
 $ curl -X PUT \
     --data @payload.json \
-    http://127.0.0.1:8500/v1/acl/idp/minikube
+    http://127.0.0.1:8500/v1/acl/auth-method/minikube
 ```
 
 ### Sample Response
@@ -222,26 +238,27 @@ $ curl -X PUT \
     "Name": "minikube",
     "Description": "updated name",
     "Type": "kubernetes",
-    "KubernetesHost": "https://192.0.2.42:8443",
-    "KubernetesCACert": "-----BEGIN CERTIFICATE-----\n...-----END CERTIFICATE-----\n",
-    "KubernetesServiceAccountJWT": "eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9...",
+    "Config": {
+        "Host": "https://192.0.2.42:8443",
+        "CACert": "-----BEGIN CERTIFICATE-----\n...-----END CERTIFICATE-----\n",
+        "ServiceAccountJWT": "eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9..."
+    },
     "CreateIndex": 15,
     "ModifyIndex": 224
 }
 ```
 
-## Delete an Identity Provider
+## Delete an Auth Method
 
-This endpoint deletes an ACL identity provider.
+This endpoint deletes an ACL auth method.
 
-~> Deleting an identity provider will also immediately delete all associated
-[role binding rules](/api/acl/role-binding-rules.html) as well as marking any
-outstanding [tokens](/api/acl/tokens.html) created from this identity provider
-as eligible for deletion.
+~> Deleting an auth method will also immediately delete all associated
+[binding rules](/api/acl/binding-rules.html) as well as any
+outstanding [tokens](/api/acl/tokens.html) created from this auth method.
 
 | Method   | Path                      | Produces                   |
 | -------- | ------------------------- | -------------------------- |
-| `DELETE` | `/acl/idp/:name`          | `application/json`         |
+| `DELETE` | `/acl/auth-method/:name`  | `application/json`         |
 
 Even though the return type is application/json, the value is either true or
 false indicating whether the delete succeeded.
@@ -258,15 +275,14 @@ The table below shows this endpoint's support for
 
 ### Parameters
 
-- `name` `(string: <required>)` - Specifies the name of the ACL identity
-  provider to delete. This is required and is specified as part of the URL
-  path.
+- `name` `(string: <required>)` - Specifies the name of the ACL auth method to
+  delete. This is required and is specified as part of the URL path.
 
 ### Sample Request
 
 ```sh
 $ curl -X DELETE \
-    http://127.0.0.1:8500/v1/acl/idp/minikube
+    http://127.0.0.1:8500/v1/acl/auth-method/minikube
 ```
 
 ### Sample Response
@@ -274,13 +290,13 @@ $ curl -X DELETE \
 true
 ```
 
-## List Identity Providers
+## List Auth Methods
 
-This endpoint lists all the ACL identity providers.
+This endpoint lists all the ACL auth methods.
 
 | Method | Path                         | Produces                   |
 | ------ | ---------------------------- | -------------------------- |
-| `GET`  | `/acl/idps`                 | `application/json`         |
+| `GET`  | `/acl/auth-methods`          | `application/json`         |
 
 The table below shows this endpoint's support for
 [blocking queries](/api/index.html#blocking-queries),
@@ -295,30 +311,27 @@ The table below shows this endpoint's support for
 ## Sample Request
 
 ```sh
-$ curl -X GET http://127.0.0.1:8500/v1/acl/idps
+$ curl -X GET http://127.0.0.1:8500/v1/acl/auth-methods
 ```
 
 ### Sample Response
 
--> **Note** - The `KubernetesCACert` and `KubernetesServiceAccountJWT` fields
-are not included in the listing and must be retrieved by the
-[identity provider reading endpoint](#read-an-identity-provider).
+-> **Note** - The contents of the `Config` field are not included in the
+listing and must be retrieved by the [auth method reading endpoint](#read-an-auth-method).
 
 ```json
 [
     {
         "Name": "minikube-1",
-        "Description": "",
         "Type": "kubernetes",
-        "KubernetesHost": "https://192.0.2.42:8443",
+        "Description": "",
         "CreateIndex": 14,
         "ModifyIndex": 14
     },
     {
         "Name": "minikube-2",
-        "Description": "",
         "Type": "kubernetes",
-        "KubernetesHost": "https://192.0.2.43:8443",
+        "Description": "",
         "CreateIndex": 15,
         "ModifyIndex": 15
     }
