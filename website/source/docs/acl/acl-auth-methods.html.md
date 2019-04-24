@@ -86,29 +86,37 @@ jointly linked to the token created by the login process.
 
 ## Overall Login Process
 
-1. Applications can use the `consul login` subcommand or the [login API
+![diagram of auth method login](/assets/images/auth-methods.svg)
+
+1. Applications use the `consul login` subcommand or the [login API
    endpoint](/api/acl/acl.html#login-to-auth-method) to authenticate to a
-   specific auth method through the Consul leader. The application provides
-   both the name of the auth method and a secret bearer token to Consul in this
-   step.
+   specific auth method using their local Consul Client. Applications provide
+   both the name of the auth method and a secret bearer token during login.
 
-2. The auth method validates the provided bearer token credentials and returns
-   trusted identity attributes to the Consul leader.
+2. The Consul Client forwards login requests to the leading Consul Server.
 
-3. The Consul leader consults the configured set of binding rules associated
-   with the chosen auth method and selects those that apply to the trusted
+3. The Consul leader uses auth method specific mechanisms to validate the
+   provided bearer token credentials.
+   
+4. Successful validation returns trusted identity attributes to the Consul
+   leader.
+
+5. The Consul leader consults the configured set of binding rules associated
+   with the chosen auth method and selects only those that match the trusted
    identity attributes.
 
-4. Bound roles and service identites are computed. If none are computed the
-   login attempt fails.
+6. Bound roles and service identites are computed. If none are computed the
+   login attempt fails. The bound roles and service identities are assigned to
+   a newly-created ACL Token created exclusively in the _local_ datacenter.
+   
+7. The relevant `SecretID` and remaining details about the token are returned to
+   the originating Consul client.
 
-5. The bound roles and service identities are assigned to a newly-created ACL
-   Token created exclusively in the _local_ datacenter. The relevant `SecretID`
-   and remaining details about the token are returned to the caller.
+8. The Consul client returns the token details back to the application.
 
-6. Applications SHOULD use the `consul logout` subcommand or the [logout API
-   endpoint](/api/acl/acl.html#logout-from-auth-method) to destroy their token
-   when it is no longer required.
+9. (later) Applications SHOULD use the `consul logout` subcommand or the
+   [logout API endpoint](/api/acl/acl.html#logout-from-auth-method) to destroy
+   their token when it is no longer required.
 
 For more details about specific auth methods and how to configure them, consult
 the type-specific docs linked in the sidebar.
