@@ -43,7 +43,8 @@ using the API or command line before they can be used by applications.
 * **Authentication** - Details about how to authenticate application
   credentials are configured using the `consul acl auth-method` subcommands or
   the corresponding [API endpoints](/api/acl/auth-methods.html). The specific
-  details of configuration are type dependent and described below.
+  details of configuration are type dependent and described in their own
+  documentation.
 
 * **Authorization** - One or more Binding Rules must be configured defining how
   to translate trusted identity attributes into privileges assigned to the ACL
@@ -53,34 +54,59 @@ using the API or command line before they can be used by applications.
 
 ## Binding Rules
 
+Once an auth method has been been used to successfully validate a user-provided
+secret bearer token and mapped it to a set of trusted identity attributes,
+those attributes are matched against all configured Binding Rules for that auth
+method.
+
 Binding rules allow an operator to express a systematic way to automatically
-assign Roles and Service Identities to newly created Tokens without operator intervention. For
+[roles](/docs/acl/acl-system.html#acl-roles) and [service
+identities](/docs/acl/acl-system.html#acl-service-identities) to newly created
+Tokens without operator intervention.
 
-[roles](/docs/acl/acl-system.html#acl-roles)
-and
-[service identities](/docs/acl/acl-system.html#acl-service-identities)
+Each binding rule is composed of two portions:
 
-authentication originating in a configured Identity Provider that assertion can
-be made with a new construct: Binding Rules.
+- **Selector** - A logical query that must match the trusted identity
+  attributes for the binding rule to be applicable to a given login attempt.
+  The syntax uses github.com/hashicorp/go-bexpr which is shared with the [API
+  filtering feature](/api/features/filtering.html).  For example:
+  `"serviceaccount.namespace==default and serviceaccount.name!=vault"`
 
-xxx
+- **Bind Type and Name** - A binding rule can bind a token to a
+  [role](/docs/acl/acl-system.html#acl-roles) or to a [service
+  identity](/docs/acl/acl-system.html#acl-service-identities) by name. The name
+  can be specified with a plain string, or the bind name can be lightly
+  templated using [HIL syntax](https://github.com/hashicorp/hil) to interpolate
+  the same values that are usable by the `Selector` syntax. For example:
+  `"dev-${serviceaccount.name}"`
 
-## Login Process
+When multiple binding rules match then all roles and service identities are
+jointly linked to the token created by the login process.
+
+## Overall Login Process
 
 1. Applications can use the `consul login` subcommand or the [login API
-   endpoint](/api/acl/acl.html#login-to-auth-method) to authenticate to an auth
-   method through the Consul leader.
+   endpoint](/api/acl/acl.html#login-to-auth-method) to authenticate to a
+   specific auth method through the Consul leader.
 
-2. The auth method validates the credentials and returns trusted identity
-   attributes to the Consul leader.
+2. The auth method validates the provided bearer token credentials and returns
+   trusted identity attributes to the Consul leader.
 
-3. The Consul leader consults the configured set of Binding Rules linked to the
-   auth method to find rules that match the trusted identity attributes.
+3. The Consul leader consults the configured set of binding rules associated
+   with the chosen auth method and selects those that apply to the trusted
+   identity attributes.
 
-4. If any Binding Rules match an ACL Token is created in the local datacenter
-   and linked to the computed Roles and Service Identities.
+4. Bound roles and service identites are computed. If none are computed the
+   login attempt fails.
 
-5. Applications can use the `consul logout` subcommand or the [logout API
+5. The bound roles and service identities are assigned to a newly-created ACL
+   Token created exclusively in the _local_ datacenter. The relevant `SecretID`
+   and remaining details about the token are returned to the caller.
+
+6. Applications SHOULD use the `consul logout` subcommand or the [logout API
    endpoint](/api/acl/acl.html#logout-from-auth-method) to destroy their token
    when it is no longer required.
+
+For more details about specific auth methods and how to configure them, consult
+the type-specific docs linked in the sidebar.
 
