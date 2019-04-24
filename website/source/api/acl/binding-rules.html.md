@@ -86,22 +86,6 @@ The table below shows this endpoint's support for
     prefixed-${serviceaccount.name}
     ```
 
-### Selector Fields for Kubernetes Auth Method
-
-~> TODO: move all of this into the /docs/ instead of duplicating between create/update?
-
-~> TODO: link to generic docs on the query language?
-
-These are the available operations supported on the various auth method
-identity fields:
-
-| Field                      | Supported Selector Operations      | Can be Interpolated |
-| -------------------------- | ---------------------------------- | ------------------- |
-| `serviceaccount.namespace` | Equal, Not Equal                   | yes                 |
-| `serviceaccount.name`      | Equal, Not Equal                   | yes                 |
-| `serviceaccount.uid`       | Equal, Not Equal                   | yes                 |
-
-  
 ### Sample Payload
 
 ```json

@@ -49,24 +49,8 @@ The table below shows this endpoint's support for
 
 - `Config` `(map[string]string: <required>)` - The raw configuration to use for
   the chosen auth method. Contents will vary depending upon the type chosen.
-
-#### Config Parameters for Type=kubernetes
-
-- `Host` `(string: <required>)` - Must be a host string, a host:port pair, or a
-  URL to the base of the Kubernetes API server. 
-
-- `CACert` `(string: <required>)` - PEM encoded CA cert for use by the TLS
-  client used to talk with the Kubernetes API. NOTE: Every line must end with a
-  newline (`\n`).
-
-- `ServiceAccountJWT` `(string: <required>)` A service account JWT used to
-  access the TokenReview API to validate other JWTs during login. It also must
-  be able to read ServiceAccount annotations.
-
-For more information on configuring the Kubernetes Auth Method, see
-the [auth method documentation](/docs/acl/acl-auth-methods.html).
-
-~> TODO: link to auth method subsection about kubernetes for details
+  For more information on configuring specific auth method types, see the [auth
+  method documentation](/docs/acl/acl-auth-methods.html).
 
 ### Sample Payload
 
@@ -190,24 +174,8 @@ The table below shows this endpoint's support for
 
 - `Config` `(map[string]string: <required>)` - The raw configuration to use for
   the chosen auth method. Contents will vary depending upon the type chosen.
-
-#### Config Parameters for Type=kubernetes
-
-- `Host` `(string: <required>)` - Must be a host string, a host:port pair, or a
-  URL to the base of the Kubernetes API server. 
-
-- `CACert` `(string: <required>)` - PEM encoded CA cert for use by the TLS
-  client used to talk with the Kubernetes API. NOTE: Every line must end with a
-  newline (`\n`).
-
-- `ServiceAccountJWT` `(string: <required>)` A service account JWT used to
-  access the TokenReview API to validate other JWTs during login. It also must
-  be able to read ServiceAccount annotations.
-
-For more information on configuring the Kubernetes Auth Method, see
-the [auth method documentation](/docs/acl/acl-auth-methods.html).
-
-~> TODO: link to auth method subsection about kubernetes for details
+  For more information on configuring specific auth method types, see the [auth
+  method documentation](/docs/acl/acl-auth-methods.html).
 
 ### Sample Payload
 

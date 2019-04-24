@@ -115,7 +115,7 @@ use in binding rule selectors and bind name interpolation:
 | `serviceaccount.name`      | Equal, Not Equal                   | yes                 |
 | `serviceaccount.uid`       | Equal, Not Equal                   | yes                 |
 
-## Kubernetes Authentication
+## Kubernetes Authentication Details
 
 Initially the
 [`ServiceAccountJWT`](/docs/acl/auth-methods/kubernetes.html#serviceaccountjwt)
