@@ -20,7 +20,7 @@ more will come later.
 
 ## Overview
 
-Without auth methods, a trusted operator needs to be critically involved in the
+Without auth methods a trusted operator needs to be critically involved in the
 creation and secure introduction of each ACL Token to every application that
 needs one, while ensuring that the policies assigned to these tokens follow the
 principle of least-privilege.
@@ -40,16 +40,17 @@ service mesh with minimal operator intervention.
 An operator needs to configure each auth method that is to be trusted by
 using the API or command line before they can be used by applications.
 
-* **Authentication** - Details about how to authenticate application
-  credentials are configured using the `consul acl auth-method` subcommands or
-  the corresponding [API endpoints](/api/acl/auth-methods.html). The specific
-  details of configuration are type dependent and described in their own
-  documentation.
+* **Authentication** - One or more **auth methods** should be configured with
+  details about how to authenticate application credentials. These can be
+  managed with the `consul acl auth-method` subcommands or the corresponding
+  [API endpoints](/api/acl/auth-methods.html). The specific details of
+  configuration are type dependent and described in their own documentation
+  pages.
 
-* **Authorization** - One or more Binding Rules must be configured defining how
-  to translate trusted identity attributes into privileges assigned to the ACL
-  Token that is created. These can be managed with the `consul acl
-  binding-rule` subcommands or the corresponding [API
+* **Authorization** - One or more **binding rules** must be configured defining
+  how to translate trusted identity attributes from each auth method into
+  privileges assigned to the ACL Token that is created. These can be managed
+  with the `consul acl binding-rule` subcommands or the corresponding [API
   endpoints](/api/acl/binding-rules.html).
 
 ## Binding Rules
@@ -87,7 +88,9 @@ jointly linked to the token created by the login process.
 
 1. Applications can use the `consul login` subcommand or the [login API
    endpoint](/api/acl/acl.html#login-to-auth-method) to authenticate to a
-   specific auth method through the Consul leader.
+   specific auth method through the Consul leader. The application provides
+   both the name of the auth method and a secret bearer token to Consul in this
+   step.
 
 2. The auth method validates the provided bearer token credentials and returns
    trusted identity attributes to the Consul leader.

@@ -3,7 +3,7 @@ layout: "docs"
 page_title: "Kubernetes Auth Method"
 sidebar_current: "docs-acl-auth-methods-kubernetes"
 description: |-
-  An Auth Method is a component in Consul that performs authentication against a trusted external party to authorize the creation of an appropriately scoped ACL Token usable within the local datacenter.
+  The kubernetes auth method type allows for a Kubernetes Service Account Token to be used to authenticate to Consul. This method of authentication makes it easy to introduce a Consul token into a Kubernetes Pod.
 ---
 
 -> **1.5.0+:**  This guide only applies in Consul versions 1.5.0 and later.
@@ -16,8 +16,9 @@ easy to introduce a Consul token into a Kubernetes Pod.
 
 ## Config Parameters
 
-The following [`Config`](/api/acl/auth-methods.html#config) parameters are required to
-setup a Kubernetes auth method:
+The following auth method [`Config`](/api/acl/auth-methods.html#config)
+parameters are required to properly configure an auth method of type
+`kubernetes`:
 
 - `Host` `(string: <required>)` - Must be a host string, a host:port pair, or a
   URL to the base of the Kubernetes API server. 
@@ -49,6 +50,10 @@ The service account corresponding to the configured
 needs to have access to two Kubernetes APIs:
 
 - [**TokenReview**](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#create-tokenreview-v1-authentication-k8s-io)
+
+       -> Kubernetes should be running with `--service-account-lookup`. This is
+       defaulted to true in Kubernetes 1.7, but any versions prior should ensure
+       the Kubernetes API server is started with this setting. 
 
 - [**ServiceAccount**](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#read-serviceaccount-v1-core)
   (`get`)
@@ -99,28 +104,29 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-## Kubernetes Login Process
+## Trusted Identity Attributes
 
-1. The Service Account JWT given to the Consul leader initially accesses the
-   TokenReview API to validate the provided JWT is still valid. Kubernetes
-   should be running with `--service-account-lookup`. This is defaulted to true
-   in Kubernetes 1.7, but any versions prior should ensure the Kubernetes API
-   server is started with this setting. 
+The authentication step returns the following trusted identity attributes for 
+use in binding rule selectors and bind name interpolation:
 
-       The trusted values of `serviceaccount.namespace`, `serviceaccount.name`, and
-       `serviceaccount.uid` are returned.
+| Attributes                 | Supported Selector Operations      | Can be Interpolated |
+| -------------------------- | ---------------------------------- | ------------------- |
+| `serviceaccount.namespace` | Equal, Not Equal                   | yes                 |
+| `serviceaccount.name`      | Equal, Not Equal                   | yes                 |
+| `serviceaccount.uid`       | Equal, Not Equal                   | yes                 |
 
-2. After validating that the provided JWT is still valid, the Consul leader
-   looks for an optional annotation of `consul.hashicorp.com/service-name` on
-   the resolved service account using the ServiceAccount API.
+## Kubernetes Authentication
 
-       If one is found the trusted value of `serviceaccount.name` is overridden
-       with that value.
+Initially the
+[`ServiceAccountJWT`](/docs/acl/auth-methods/kubernetes.html#serviceaccountjwt)
+given to the Consul leader uses the TokenReview API to validate the provided
+JWT is still valid. The trusted attributes of `serviceaccount.namespace`,
+`serviceaccount.name`, and `serviceaccount.uid` are populated directly from the
+Service Account metadata.
 
-3. The rest of the login flow proceeds normally.
-
-## Binding Rules
-
-
-
+The Consul leader makes an additional query, this time to the ServiceAccount
+API to check for the existence of an annotation of
+`consul.hashicorp.com/service-name` on the ServiceAccount object. If one is
+found its value will override the trusted attribute of `serviceaccount.name`
+for the purposes of evaluating any binding rules.
 
