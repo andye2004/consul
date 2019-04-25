@@ -258,8 +258,8 @@ Role "d8317c3c-899b-0229-f6fe-ebc130878167" deleted successfully
 Delete a role by name:
 
 ```sh
-$ consul acl role delete -name acl-replication
-role "35b8ecb0-707c-ee18-2002-81b238b54b38" deleted successfully
+$ consul acl role delete -name crawler
+Role "e44692f8-bcf5-a8cc-3607-315aa420c314" deleted successfully
 ```
 
 ## `list`
@@ -285,39 +285,40 @@ Default listing.
 
 ```sh
 $ consul acl role list
-global-management:
-   ID:           00000000-0000-0000-0000-000000000001
-   Description:  Builtin role that grants unlimited access
-   Datacenters:
-acl-replication:
-   ID:           35b8ecb0-707c-ee18-2002-81b238b54b38
-   Description:  role capable of replicating ACL roles
-   Datacenters:
+crawler:
+   ID:           2169f201-7ecb-b460-bdc6-aa3aff752ed5
+   Description:  role for web crawler
+   Policies:
+      e7f70121-3235-8909-748f-fc6dd30490ce - crawler-kv
+   Service Identities:
+archiver:
+   ID:           36c354c4-94b0-72e4-7de9-e2e454fd8c53
+   Description:  
+   Policies:
+   Service Identities:
+      archiver (Datacenters: dc2)
 ```
 
 Show Metadata.
 
 ```sh
 $ consul acl role list -meta
-global-management:
-   ID:           00000000-0000-0000-0000-000000000001
-   Description:  Builtin role that grants unlimited access
-   Datacenters:
-   Hash:         b30210b7aba9facd1c57891e3df27669174a08b690cb2905e0797535f75eba69
-   Create Index: 4
-   Modify Index: 4
-node-services-read:
-   ID:           06acc965-df4b-5a99-58cb-3250930c6324
-   Description:  Can read any node and service
-   Datacenters:
-   Hash:         19d2a73dcd315506af73bfff1492779a0dc0235066fcac07f432fb2cc3402133
-   Create Index: 244
-   Modify Index: 244
-acl-replication:
-   ID:           ca44555b-a2d8-94de-d763-88caffdaf11f
-   Description:  Token capable of replicating ACL roles
-   Datacenters:  dc1, dc2
-   Hash:         b94669679cc24e0d064412e4aa90b470b7f900a8e0801f65feaf1f7d716a5390
-   Create Index: 198
-   Modify Index: 198
+crawler:
+   ID:           2169f201-7ecb-b460-bdc6-aa3aff752ed5
+   Description:  role for web crawler
+   Hash:         d24823ed992714d05f12396c8a2a8d317686fe62fd8fbb2d035e1dcfc1b8c476
+   Create Index: 358
+   Modify Index: 358
+   Policies:
+      e7f70121-3235-8909-748f-fc6dd30490ce - crawler-kv
+   Service Identities:
+archiver:
+   ID:           36c354c4-94b0-72e4-7de9-e2e454fd8c53
+   Description:  
+   Hash:         333a867fa51887b588fc353604832735a3d9305b91a9c6b57affc198ebf30b28
+   Create Index: 360
+   Modify Index: 360
+   Policies:
+   Service Identities:
+      archiver (Datacenters: dc2)
 ```
