@@ -1,0 +1,419 @@
+---
+layout: "docs"
+page_title: "Commands: ACL Role Management"
+sidebar_current: "docs-commands-acl-role"
+---
+
+-> **1.5.0+:**  These commands are available in Consul versions 1.5.0 and later.
+
+# Consul ACL Roles
+
+Command: `consul acl role`
+
+The `acl role` command is used to manage Consul's ACL roles. There are
+subcommands for the individual operations that can be performed.
+
+* [`create`](#create)
+* [`read`](#read)
+* [`update`](#update)
+* [`delete`](#delete)
+* [`list`](#list)
+
+ACL roles are also accessible via the [HTTP API](/api/acl/roles.html).
+
+Usage: `consul acl role <subcommand> [options] [args]`
+
+-> **Note:** All of the examples show for the subcommands will require a valid
+Consul token with the appropriate permissions.  Either set the
+`CONSUL_HTTP_TOKEN` environment variable to the tokens secret ID or pass the
+secret ID as the value of the `-token` parameter.
+
+## Identifying Roles
+
+In several of the subcommands a role will have to be identified to be read,
+modified, or deleted. Those subcommands support specifying the role by its ID
+using the `-id` parameter or by name using the `-name` parameter. When
+specifying the role by its ID a unique role ID prefix may be specified instead
+of the entire UUID. As long as it is unique it will be resolved to the full
+UUID and used.
+
+## Common Subcommand Options
+
+All of the `consul acl role` subcommands support the following options:
+
+<%= partial "docs/commands/http_api_options_client" %>
+<%= partial "docs/commands/http_api_options_server" %>
+
+## `create`
+
+Command: `consul acl role create`
+
+This command creates new roles.
+
+### Usage
+
+Usage: `consul acl role create [options] [args]`
+
+#### Options
+
+* [Common Subcommand Options](#common-subcommand-options)
+
+* `-description=<string>` - A description of the role.
+
+* `-from-token=<string>` - The legacy token to retrieve the rules for when creating this
+   role. When this is specified no other rules should be given.
+   Similar to the -rules option the token to use can be loaded from
+   stdin or from a file.
+
+* `-meta` - Indicates that role metadata such as the content hash and raft
+   indices should be shown for each entry.
+
+* `-name=<string>` - The new role's name. This flag is required.
+
+* `-rules=<string>` - The role rules. May be prefixed with '@' to indicate that the
+   value is a file path to load the rules from. '-' may also be given
+   to indicate that the rules are available on stdin.
+
+* `-token-secret` - Indicates the token provided with -from-token is a SecretID and not
+   an AccessorID.
+
+* `-valid-datacenter=<value>` - Datacenter that the role should be valid within.
+   This flag may be specified multiple times.
+
+
+### Examples
+
+Create a new role that is valid in all datacenters:
+
+```sh
+$ consul acl role create -name "acl-replication" -description "role capable of replicating ACL roles" -rules 'acl = "read"'
+ID:           35b8ecb0-707c-ee18-2002-81b238b54b38
+Name:         acl-replication
+Description:  role capable of replicating ACL roles
+Datacenters:
+Rules:
+acl = "read"
+```
+
+Create a new role valid only in specific datacenters with rules read from a file:
+
+```sh
+$ consul acl role create -name "replication" -description "Replication" -rules @rules.hcl -valid-datacenter dc1 -valid-datacenter dc2
+ID:           ca44555b-a2d8-94de-d763-88caffdaf11f
+Name:         replication
+Description:  Replication
+Datacenters:  dc1, dc2
+Rules:
+acl = "read"
+service_prefix "" {
+   role = "read"
+   intentions = "read"
+}
+```
+
+Create a new role with rules equivalent to that of a legacy ACL token:
+
+```sh
+$ consul acl role create -name "node-services-read" -from-token 5793a5ce -description "Can read any node and service"
+ID:           06acc965-df4b-5a99-58cb-3250930c6324
+Name:         node-services-read
+Description:  Can read any node and service
+Datacenters:
+Rules:
+service_prefix "" {
+  role = "read"
+}
+
+node_prefix "" {
+  role = "read"
+}
+
+```
+
+## `read`
+
+Command: `consul acl role read`
+
+This command reads and displays a roles details.
+
+### Usage
+
+Usage: `consul acl role read [options] [args]`
+
+#### Options
+
+* [Common Subcommand Options](#common-subcommand-options)
+
+* `-id=<string>` - The ID of the role to read. It may be specified as a unique ID
+   prefix but will error if the prefix matches multiple role IDs.
+
+* `-meta` - Indicates that role metadata such as the content hash and raft
+  indices should be shown for each entry.
+
+* `-name=<string>` - The name of the role to read.
+
+### Examples
+
+Get role details:
+
+```sh
+$ consul acl role read -id 00000000-0000-0000-0000-000000000001
+ID:           00000000-0000-0000-0000-000000000001
+Name:         global-management
+Description:  Builtin role that grants unlimited access
+Datacenters:
+Rules:
+
+acl = "write"
+agent_prefix "" {
+   role = "write"
+}
+event_prefix "" {
+   role = "write"
+}
+key_prefix "" {
+   role = "write"
+}
+keyring = "write"
+node_prefix "" {
+   role = "write"
+}
+operator = "write"
+query_prefix "" {
+   role = "write"
+}
+service_prefix "" {
+   role = "write"
+   intentions = "write"
+}
+session_prefix "" {
+   role = "write"
+}
+```
+
+Get role details by name:
+
+```sh
+$ consul acl role read -name "acl-replication"
+ID:           35b8ecb0-707c-ee18-2002-81b238b54b38
+Name:         acl-replication
+Description:  Token capable of replicating ACL roles
+Datacenters:
+Rules:
+acl = "read"
+```
+
+Get role details (Builtin Roles):
+
+Builtin roles can be accessed by specifying their original name as the value to the `-id` parameter.
+
+```sh
+$ consul acl role read -id global-management
+ID:           00000000-0000-0000-0000-000000000001
+Name:         global-management
+Description:  Builtin role that grants unlimited access
+Datacenters:
+Hash:         b30210b7aba9facd1c57891e3df27669174a08b690cb2905e0797535f75eba69
+Create Index: 4
+Modify Index: 4
+Rules:
+
+acl = "write"
+agent_prefix "" {
+   role = "write"
+}
+event_prefix "" {
+   role = "write"
+}
+key_prefix "" {
+   role = "write"
+}
+keyring = "write"
+node_prefix "" {
+   role = "write"
+}
+operator = "write"
+query_prefix "" {
+   role = "write"
+}
+service_prefix "" {
+   role = "write"
+   intentions = "write"
+}
+session_prefix "" {
+   role = "write"
+}
+```
+
+## `update`
+
+Command: `consul acl role update`
+
+This command is used to update a role. The default operations is to merge the current role
+with those values provided to the command invocation. Therefore to update just one field, only
+the `-id` or `-name` options and the option to modify must be provided. Note that renaming
+roles requires both the `-id` and `-name` as the new name cannot yet be used to lookup the
+role.
+
+### Usage
+
+Usage: `consul acl role update [options] [args]`
+
+#### Options
+
+* [Common Subcommand Options](#common-subcommand-options)
+
+* `-description=<string>` - A description of the role.
+
+* `-id=<string>` - The ID of the role to update. It may be specified as a
+   unique ID prefix but will error if the prefix matches multiple role IDs
+
+* `-meta` - Indicates that role metadata such as the content hash and raft
+  indices should be shown for each entry
+
+* `-name=<string>` - The roles name.
+
+* `-no-merge` - Do not merge the current role information with what is provided
+   to the command. Instead overwrite all fields with the exception of
+   the role ID which is immutable.
+
+* `-rules=<string>` - The role rules. May be prefixed with `@` to indicate that
+   the value is a file path to load the rules from. `-` may also be given to
+   indicate that the rules are available on stdin.
+
+* `-valid-datacenter=<value>` - Datacenter that the role should be valid within.
+   This flag may be specified multiple times.
+
+### Examples
+
+Update a role:
+
+```sh
+$ consul acl role update -id 35b8 -name "replication" -description "role capable of replication ACL roles and Intentions" -rules @rules.hcl
+role updated successfully
+ID:           35b8ecb0-707c-ee18-2002-81b238b54b38
+Name:         replication
+Description:  role capable of replication ACL roles and Intentions
+Datacenters:
+Rules:
+acl = "read"
+
+service_prefix "" {
+   role = "read"
+   intentions = "read"
+}
+```
+
+Rename a role:
+
+```sh
+$ consul acl role update -id 35b8 -name "dc1-replication"
+role updated successfully
+ID:           35b8ecb0-707c-ee18-2002-81b238b54b38
+Name:         dc1-replication
+Description:  role capable of replication ACL roles and Intentions
+Datacenters:  dc1
+Rules:
+acl = "read"
+
+service_prefix "" {
+   role = "read"
+   intentions = "read"
+}
+
+```
+
+## `delete`
+
+Command: `consul acl role delete`
+
+This command deletes a role. Roles may be deleted by their ID or by name.
+
+### Usage
+
+Usage: `consul acl role delete [options]`
+
+#### Options
+
+* [Common Subcommand Options](#common-subcommand-options)
+
+* `-id=<string>` - The ID of the role to delete. It may be specified as a
+   unique ID prefix but will error if the prefix matches multiple role IDs.
+
+* `-name=<string>` - The Name of the role to delete.
+
+### Examples
+
+Delete a role:
+
+```sh
+$ consul acl role delete -id 35b8
+role "35b8ecb0-707c-ee18-2002-81b238b54b38" deleted successfully
+```
+
+Delete a role by name:
+
+```sh
+$ consul acl role delete -name acl-replication
+role "35b8ecb0-707c-ee18-2002-81b238b54b38" deleted successfully
+```
+
+## `list`
+
+Command: `consul acl role list`
+
+This command lists all roles. By default it will not show metadata.
+
+### Usage
+
+Usage: `consul acl role list`
+
+#### Options
+
+* [Common Subcommand Options](#common-subcommand-options)
+
+* `-meta` - Indicates that role metadata such as the content hash and
+   Raft indices should be shown for each entry.
+
+### Examples
+
+Default listing.
+
+```sh
+$ consul acl role list
+global-management:
+   ID:           00000000-0000-0000-0000-000000000001
+   Description:  Builtin role that grants unlimited access
+   Datacenters:
+acl-replication:
+   ID:           35b8ecb0-707c-ee18-2002-81b238b54b38
+   Description:  role capable of replicating ACL roles
+   Datacenters:
+```
+
+Show Metadata.
+
+```sh
+$ consul acl role list -meta
+global-management:
+   ID:           00000000-0000-0000-0000-000000000001
+   Description:  Builtin role that grants unlimited access
+   Datacenters:
+   Hash:         b30210b7aba9facd1c57891e3df27669174a08b690cb2905e0797535f75eba69
+   Create Index: 4
+   Modify Index: 4
+node-services-read:
+   ID:           06acc965-df4b-5a99-58cb-3250930c6324
+   Description:  Can read any node and service
+   Datacenters:
+   Hash:         19d2a73dcd315506af73bfff1492779a0dc0235066fcac07f432fb2cc3402133
+   Create Index: 244
+   Modify Index: 244
+acl-replication:
+   ID:           ca44555b-a2d8-94de-d763-88caffdaf11f
+   Description:  Token capable of replicating ACL roles
+   Datacenters:  dc1, dc2
+   Hash:         b94669679cc24e0d064412e4aa90b470b7f900a8e0801f65feaf1f7d716a5390
+   Create Index: 198
+   Modify Index: 198
+```
