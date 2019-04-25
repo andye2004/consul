@@ -208,6 +208,16 @@ type KubernetesAuthMethodConfig struct {
 	ServiceAccountJWT string `json:",omitempty"`
 }
 
+// RenderToConfig converts this into a map[string]interface{} suitable for use
+// in the ACLAuthMethod.Config field.
+func (c *KubernetesAuthMethodConfig) RenderToConfig() map[string]interface{} {
+	return map[string]interface{}{
+		"Host":              c.Host,
+		"CACert":            c.CACert,
+		"ServiceAccountJWT": c.ServiceAccountJWT,
+	}
+}
+
 type ACLLoginParams struct {
 	AuthMethod  string
 	BearerToken string

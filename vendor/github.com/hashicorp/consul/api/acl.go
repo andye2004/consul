@@ -162,9 +162,9 @@ type ACLAuthMethod struct {
 	Type        string
 	Description string
 
-	// Configuration is arbitrary configuration for the provider. This
-	// should only contain primitive values and containers (such as lists
-	// and maps).
+	// Configuration is arbitrary configuration for the auth method. This
+	// should only contain primitive values and containers (such as lists and
+	// maps).
 	Config map[string]interface{}
 
 	CreateIndex uint64
@@ -206,6 +206,16 @@ type KubernetesAuthMethodConfig struct {
 	Host              string `json:",omitempty"`
 	CACert            string `json:",omitempty"`
 	ServiceAccountJWT string `json:",omitempty"`
+}
+
+// RenderToConfig converts this into a map[string]interface{} suitable for use
+// in the ACLAuthMethod.Config field.
+func (c *KubernetesAuthMethodConfig) RenderToConfig() map[string]interface{} {
+	return map[string]interface{}{
+		"Host":              c.Host,
+		"CACert":            c.CACert,
+		"ServiceAccountJWT": c.ServiceAccountJWT,
+	}
 }
 
 type ACLLoginParams struct {
