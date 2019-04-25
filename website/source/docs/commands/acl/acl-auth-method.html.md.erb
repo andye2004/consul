@@ -51,7 +51,7 @@ Usage: `consul acl auth-method create [options] [args]`
 
 * `-description=<string>` - A description of the auth method.
 
-* `-meta` - Indicates that auth method metadata such as the content hash and raft
+* `-meta` - Indicates that auth method metadata such as the raft
    indices should be shown for each entry.
 
 * `-name=<string>` - The new auth method's name. This flag is required.
@@ -104,7 +104,7 @@ Usage: `consul acl auth-method read [options] [args]`
 
 * [Common Subcommand Options](#common-subcommand-options)
 
-* `-meta` - Indicates that auth method metadata such as the content hash and raft
+* `-meta` - Indicates that auth method metadata such as the raft
   indices should be shown for each entry.
 
 * `-name=<string>` - The name of the auth method to read.
@@ -157,7 +157,7 @@ Usage: `consul acl auth-method update [options] [args]`
   used to access the TokenReview API to validate other JWTs during login. This
   flag is required for `-type=kubernetes`.
 
-* `-meta` - Indicates that auth method metadata such as the content hash and raft
+* `-meta` - Indicates that auth method metadata such as the raft
   indices should be shown for each entry
 
 * `-name=<string>` - The name of the auth method to update.
@@ -224,8 +224,8 @@ Usage: `consul acl auth-method list`
 
 * [Common Subcommand Options](#common-subcommand-options)
 
-* `-meta` - Indicates that auth method metadata such as the content hash and
-   Raft indices should be shown for each entry.
+* `-meta` - Indicates that auth method metadata such as the raft indices should
+  be shown for each entry.
 
 ### Examples
 
