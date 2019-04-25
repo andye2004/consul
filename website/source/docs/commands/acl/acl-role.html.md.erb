@@ -85,20 +85,18 @@ Usage: `consul acl role create [options] [args]`
 Create a new role with one policy:
 
 ```sh
-$ consul acl role create -name "crawler" -description "role for web crawler" \
-    -policy-name "crawler-kv"
+$ consul acl role create -name "crawler" -description "web crawler role" -policy-name "crawler-kv"
 ID:           e44692f8-bcf5-a8cc-3607-315aa420c314
 Name:         crawler
-Description:  role for web crawler
+Description:  web crawler role
 Policies:
    e7f70121-3235-8909-748f-fc6dd30490ce - crawler-kv
 Service Identities:
 ```
 
-Create a new role valid only in specific datacenters with rules read from a file:
+Create a new role with one service identity:
 
 ```sh
-
 $ consul acl role create -name archiver -service-identity "archiver:dc2"
 ID:           d8317c3c-899b-0229-f6fe-ebc130878167
 Name:         archiver
@@ -106,39 +104,6 @@ Description:
 Policies:
 Service Identities:
    archiver (Datacenters: dc2)
-
-
-
-$ consul acl role create -name "replication" -description "Replication" -rules @rules.hcl -valid-datacenter dc1 -valid-datacenter dc2
-ID:           ca44555b-a2d8-94de-d763-88caffdaf11f
-Name:         replication
-Description:  Replication
-Datacenters:  dc1, dc2
-Rules:
-acl = "read"
-service_prefix "" {
-   role = "read"
-   intentions = "read"
-}
-```
-
-Create a new role with rules equivalent to that of a legacy ACL token:
-
-```sh
-$ consul acl role create -name "node-services-read" -from-token 5793a5ce -description "Can read any node and service"
-ID:           06acc965-df4b-5a99-58cb-3250930c6324
-Name:         node-services-read
-Description:  Can read any node and service
-Datacenters:
-Rules:
-service_prefix "" {
-  role = "read"
-}
-
-node_prefix "" {
-  role = "read"
-}
-
 ```
 
 ## `read`
@@ -168,103 +133,36 @@ Usage: `consul acl role read [options] [args]`
 Get role details:
 
 ```sh
-$ consul acl role read -id 00000000-0000-0000-0000-000000000001
-ID:           00000000-0000-0000-0000-000000000001
-Name:         global-management
-Description:  Builtin role that grants unlimited access
-Datacenters:
-Rules:
-
-acl = "write"
-agent_prefix "" {
-   role = "write"
-}
-event_prefix "" {
-   role = "write"
-}
-key_prefix "" {
-   role = "write"
-}
-keyring = "write"
-node_prefix "" {
-   role = "write"
-}
-operator = "write"
-query_prefix "" {
-   role = "write"
-}
-service_prefix "" {
-   role = "write"
-   intentions = "write"
-}
-session_prefix "" {
-   role = "write"
-}
+$ consul acl role read -id e44692f8-bcf5-a8cc-3607-315aa420c314
+ID:           e44692f8-bcf5-a8cc-3607-315aa420c314
+Name:         crawler
+Description:  web crawler role
+Policies:
+   e7f70121-3235-8909-748f-fc6dd30490ce - crawler-kv
+Service Identities:
 ```
 
 Get role details by name:
 
 ```sh
-$ consul acl role read -name "acl-replication"
-ID:           35b8ecb0-707c-ee18-2002-81b238b54b38
-Name:         acl-replication
-Description:  Token capable of replicating ACL roles
-Datacenters:
-Rules:
-acl = "read"
-```
-
-Get role details (Builtin Roles):
-
-Builtin roles can be accessed by specifying their original name as the value to the `-id` parameter.
-
-```sh
-$ consul acl role read -id global-management
-ID:           00000000-0000-0000-0000-000000000001
-Name:         global-management
-Description:  Builtin role that grants unlimited access
-Datacenters:
-Hash:         b30210b7aba9facd1c57891e3df27669174a08b690cb2905e0797535f75eba69
-Create Index: 4
-Modify Index: 4
-Rules:
-
-acl = "write"
-agent_prefix "" {
-   role = "write"
-}
-event_prefix "" {
-   role = "write"
-}
-key_prefix "" {
-   role = "write"
-}
-keyring = "write"
-node_prefix "" {
-   role = "write"
-}
-operator = "write"
-query_prefix "" {
-   role = "write"
-}
-service_prefix "" {
-   role = "write"
-   intentions = "write"
-}
-session_prefix "" {
-   role = "write"
-}
+$ consul acl role read -name archiver
+ID:           d8317c3c-899b-0229-f6fe-ebc130878167
+Name:         archiver
+Description:  
+Policies:
+Service Identities:
+   archiver (Datacenters: dc2)
 ```
 
 ## `update`
 
 Command: `consul acl role update`
 
-This command is used to update a role. The default operations is to merge the current role
-with those values provided to the command invocation. Therefore to update just one field, only
-the `-id` or `-name` options and the option to modify must be provided. Note that renaming
-roles requires both the `-id` and `-name` as the new name cannot yet be used to lookup the
-role.
+This command is used to update a role. The default operations is to merge the
+current role with those values provided to the command invocation. Therefore to
+update just one field, only the `-id` or `-name` options and the option to
+modify must be provided. Note that renaming roles requires both the `-id` and
+`-name` as the new name cannot yet be used to lookup the role.
 
 ### Usage
 
@@ -277,61 +175,56 @@ Usage: `consul acl role update [options] [args]`
 * `-description=<string>` - A description of the role.
 
 * `-id=<string>` - The ID of the role to update. It may be specified as a
-   unique ID prefix but will error if the prefix matches multiple role IDs
+  unique ID prefix but will error if the prefix matches multiple role IDs
+
 
 * `-meta` - Indicates that role metadata such as the content hash and raft
   indices should be shown for each entry
 
-* `-name=<string>` - The roles name.
+* `-name=<string>` - The role name.
 
 * `-no-merge` - Do not merge the current role information with what is provided
-   to the command. Instead overwrite all fields with the exception of
-   the role ID which is immutable.
+  to the command. Instead overwrite all fields with the exception of the role
+  ID which is immutable.
 
-* `-rules=<string>` - The role rules. May be prefixed with `@` to indicate that
-   the value is a file path to load the rules from. `-` may also be given to
-   indicate that the rules are available on stdin.
+* `-policy-id=<value>` - ID of a policy to use for this role. May be specified
+  multiple times
 
-* `-valid-datacenter=<value>` - Datacenter that the role should be valid within.
-   This flag may be specified multiple times.
+* `-policy-name=<value>` - Name of a policy to use for this role. May be
+  specified multiple times
+
+* `-service-identity=<value>` - Name of a service identity to use for this
+  role. May be specified multiple times. Format is the `SERVICENAME` or
+  `SERVICENAME:DATACENTER1,DATACENTER2,...`
 
 ### Examples
 
 Update a role:
 
 ```sh
-$ consul acl role update -id 35b8 -name "replication" -description "role capable of replication ACL roles and Intentions" -rules @rules.hcl
-role updated successfully
-ID:           35b8ecb0-707c-ee18-2002-81b238b54b38
-Name:         replication
-Description:  role capable of replication ACL roles and Intentions
-Datacenters:
-Rules:
-acl = "read"
-
-service_prefix "" {
-   role = "read"
-   intentions = "read"
-}
+$ consul acl role update -id e44692f8-bcf5-a8cc-3607-315aa420c314 \
+    -description 'better description' -service-identity 'crawler'
+Role updated successfully
+ID:           e44692f8-bcf5-a8cc-3607-315aa420c314
+Name:         crawler
+Description:  better description
+Policies:
+   e7f70121-3235-8909-748f-fc6dd30490ce - crawler-kv
+Service Identities:
+   crawler (Datacenters: all)
 ```
 
 Rename a role:
 
 ```sh
-$ consul acl role update -id 35b8 -name "dc1-replication"
-role updated successfully
-ID:           35b8ecb0-707c-ee18-2002-81b238b54b38
-Name:         dc1-replication
-Description:  role capable of replication ACL roles and Intentions
-Datacenters:  dc1
-Rules:
-acl = "read"
-
-service_prefix "" {
-   role = "read"
-   intentions = "read"
-}
-
+$ consul acl role update -id d8317 -name web-crawler
+Role updated successfully
+ID:           d8317c3c-899b-0229-f6fe-ebc130878167
+Name:         web-crawler
+Description:  
+Policies:
+Service Identities:
+   archiver (Datacenters: dc2)
 ```
 
 ## `delete`
@@ -349,7 +242,7 @@ Usage: `consul acl role delete [options]`
 * [Common Subcommand Options](#common-subcommand-options)
 
 * `-id=<string>` - The ID of the role to delete. It may be specified as a
-   unique ID prefix but will error if the prefix matches multiple role IDs.
+  unique ID prefix but will error if the prefix matches multiple role IDs.
 
 * `-name=<string>` - The Name of the role to delete.
 
@@ -358,8 +251,8 @@ Usage: `consul acl role delete [options]`
 Delete a role:
 
 ```sh
-$ consul acl role delete -id 35b8
-role "35b8ecb0-707c-ee18-2002-81b238b54b38" deleted successfully
+$ consul acl role delete -id d8317
+Role "d8317c3c-899b-0229-f6fe-ebc130878167" deleted successfully
 ```
 
 Delete a role by name:
