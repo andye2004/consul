@@ -60,9 +60,6 @@ Usage: `consul acl role create [options] [args]`
 
 * `-description=<string>` - A description of the role.
 
-* `-meta` - Indicates that role metadata such as the content hash and raft
-   indices should be shown for each entry.
-
 * `-name=<string>` - The new role's name. This flag is required.
 
 * `-policy-id=<value>` - ID of a policy to use for this role. May be specified
@@ -74,6 +71,9 @@ Usage: `consul acl role create [options] [args]`
 * `-service-identity=<value>` - Name of a service identity to use for this
   role. May be specified multiple times. Format is the `SERVICENAME` or
   `SERVICENAME:DATACENTER1,DATACENTER2,...`
+
+* `-meta` - Indicates that role metadata such as the content hash and raft
+   indices should be shown for each entry.
 
 ### Examples
 
