@@ -70,34 +70,45 @@ Usage: `consul acl role create [options] [args]`
 
 * `-name=<string>` - The new role's name. This flag is required.
 
-* `-rules=<string>` - The role rules. May be prefixed with '@' to indicate that the
-   value is a file path to load the rules from. '-' may also be given
-   to indicate that the rules are available on stdin.
+* `-policy-id=<value>` - ID of a policy to use for this role. May be specified
+  multiple times
 
-* `-token-secret` - Indicates the token provided with -from-token is a SecretID and not
-   an AccessorID.
+* `-policy-name=<value>` - Name of a policy to use for this role. May be
+  specified multiple times
 
-* `-valid-datacenter=<value>` - Datacenter that the role should be valid within.
-   This flag may be specified multiple times.
-
+* `-service-identity=<value>` - Name of a service identity to use for this
+  role. May be specified multiple times. Format is the `SERVICENAME` or
+  `SERVICENAME:DATACENTER1,DATACENTER2,...`
 
 ### Examples
 
-Create a new role that is valid in all datacenters:
+Create a new role with one policy:
 
 ```sh
-$ consul acl role create -name "acl-replication" -description "role capable of replicating ACL roles" -rules 'acl = "read"'
-ID:           35b8ecb0-707c-ee18-2002-81b238b54b38
-Name:         acl-replication
-Description:  role capable of replicating ACL roles
-Datacenters:
-Rules:
-acl = "read"
+$ consul acl role create -name "crawler" -description "role for web crawler" \
+    -policy-name "crawler-kv"
+ID:           e44692f8-bcf5-a8cc-3607-315aa420c314
+Name:         crawler
+Description:  role for web crawler
+Policies:
+   e7f70121-3235-8909-748f-fc6dd30490ce - crawler-kv
+Service Identities:
 ```
 
 Create a new role valid only in specific datacenters with rules read from a file:
 
 ```sh
+
+$ consul acl role create -name archiver -service-identity "archiver:dc2"
+ID:           d8317c3c-899b-0229-f6fe-ebc130878167
+Name:         archiver
+Description:  
+Policies:
+Service Identities:
+   archiver (Datacenters: dc2)
+
+
+
 $ consul acl role create -name "replication" -description "Replication" -rules @rules.hcl -valid-datacenter dc1 -valid-datacenter dc2
 ID:           ca44555b-a2d8-94de-d763-88caffdaf11f
 Name:         replication
